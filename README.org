@@ -1,0 +1,224 @@
+#+TITLE: Tkacz
+#+SUBTITLE: The advanced, extensible and non-existing reference manager.
+#+OPTIONS: toc:2
+
+This document describes yet another instantiation of my attempts to create a sane reference manager that could actually /improve/ rather than degrade my bibliography/PDF management workflows.
+
+* Introduction: doing two things and doing them well
+
+Why yet another reference manager?  The first goal of Tkacz is to be usable for very large bibliographies in the field of historical sciences, with a strong focus on contemporary history of science, although it shouldn't be restricted to a specific field.  Current document/management software fall in one of two categories, each with its own shortcomings:
+
+\paragraph{Document managers} usually have very powerful classification, ordering and annotation features, but a very poor data model, which makes it hard to actually meaningfully and formally /describe/ documents by providing formal bibliographic references.
+
+Most document management software also assume documents are somehow unique and /sui generis/, where historical sources tend to have significant histories: they may be reprinted, republished, collected and updated, and all of this matters, both for the history of the document and its availability: knowing where to find an obscure article is important.   In the “hard” sciences, the most complicated (significant) thing that can happen to an article is to be withdrawn, and all you're expected to do in this case is not to cite it anymore; but for historical research, withdrawals or reprints are actually significant.
+
+It is also assumed that documents are files, usually PDFs.  But it's often the case that documentation is scattered between different libraries, printed and electronic copies, that not everything has a PDF and not every PDF is complete.
+
+\paragraph{Reference managers} make it easy to reference documents you don't actually own (and often make it the default), and usually have a powerful (or extensible) enough data model to accommodate a lot of information, but they usually fall very short when it comes to classification.  Beyond that, the (potential) power of the data model is not necessarily reflected in all UIs, and some changes that are theoretically possible in the data model will make the data actually unusable.  For instance, handing authors not as strings, but as /objects/ is /theoretically/ feasible in the BibTeX format; but such files would be unusable by the Bib(La)TeX family of programs.
+
+\paragraph{}
+
+The goal of Tkacz is to “do /two/ things, and do them well”: to serve as a document manager with the full power of a bibliographical data manager.  That means:
+
+   - Nicely deal with *complex or unusual entities*: manuscripts, unpublished works, posthumous publications, etc.  This means a more complex data model that most reference managers provide, and if possible an /extensible/ data model.
+
+   - Prefer *objects over strings* for qualified properties.  Authors, for example: attribution is important, and attribution can be tricky; it's thus better that the =author= field takes a series of person objects, optionally parameterized, insted of a list of strings.  This helps solve three problems: a) it allows to keep notes on persons as well, which can be quickly retrieved and are connected to this person's works; b) it nicely handles cases where a given person published under multiple names, or published anonymous works, making it easy to present the complete list of someone's works, regardless of the name they were published under; c) it also, obviously, makes typos much easier to detect and correct.
+
+   - Provide advanced *classification* mechanisms: hierarchical or flat collections, tags, etc.  Because we use objects rather than strings, a good deal of classification can be automated: works by this author, works in this journal, etc.  Classification also allows to consider objects as topics: it is not uncommon, eg. in philosophy or literature, that the topic of a book is the author of other books.  Friedrich Nietzsche is the /author/ of the /Geneology of Morals/, and the /topic/ of Heidegger's /Nietzsche/.
+
+   - Provide just as powerful *annotation* features.
+
+   - Express *relationships* between entities: an article and a reprint, or a withdrawal, a book and its editions, a multipart work and its parts, etc.
+
+   - Help represent the *history* of references: an article may have been published in a journal, then reprinted multiple times in different books.  Where do I look for Canguilhem's 1966 article “Mort de l'homme ou épuisement du cogito?”, if I can't get the original journal?  Has it been translated into English, if I need to cite it in an English article, and where to find the translation?
+
+   - Make it hard to introduce inconsistencies or typos in the database.  Journals, like persons, are objects: if the object describes the publishing rate, then no reference could contain a volume/issue number inconsistent with publication date without at least generating a warning.
+
+   - Create usable bibliographic *databases* for use with (La)TeX (and other reference managers).  The data model described above is way too expressive for what BiBTeX or BibLaTeX can handle, so Tkacz needs to be able to build =.bib= files on-demand with a given subset of its db.
+
+   - Rather than supporting “file attachments”, provide a general mechanism to describe *copies* of a reference, some of which can be files, but would also include things like: it's in this library at this call number; it's in my personal library, I have a printout in this box, /etc/.
+
+   - Make the *database history* easy to browse, review, and understand.  Nothing frightens me more than undocumented and non-versioned binary databases with quirky UIs that make it hard to get a grasp of what's going on (yes, [[https://www.readcube.com/papers/][Papers]], I'm looking at you).  The database will be in a Lisp-like syntax (think XML with parentheses), with Git integration out of the box.  A change = a commit, with a meaningful message.  This leaves the user free to rebase, reorder or squash commits before pushing, and should make it trivial to keep a perfectly clean history.
+
+* Usage
+
+When started with =M-x tkacz RET=, Tkacz shows a list of all references it has in store.  It can also show a list of any other type of entities: to do so, press e, then select the entity you want shown.  There are four by default: references (=r=), persons (=p=), publishers (=b=), and journals (=j=).
+
+By default, entities are displayed in so-called natural format, they can also be shown in tabulated format by pressing ===.
+
+** Creating references
+
+There are multiple ways to create new references:
+
+ - Press =n n= in the references view to display an input form where you can manually fill fields.  This is the most tedious way, and should generally be avoided.
+ - =n u= will prompt for a URL, then do its best to build a reference out of it.  If possible, it will assimilate the associated PDF as a copy of the reference.  =n U= does the same in a loop, which is useful if you're browsing the web in search for documentation.  To create references from a web browser, simply configure it to =(eval)= =(tkacz/create-reference-from-url)= or (=tkacz/create-reference-from-html)= on the Emacs daemon.
+ - =n d= will show a drop area on which you can drag and drop virtually everything, with a strong preference for URLs and PDFs.
+
+* Implementation
+
+Very similarly to Emacs itself, Tkacz is written and configured in Lisp[fn:1].
+
+** Types
+
+Tkacz has strong implicit typing, but its type system comes with its own set of quirks.  The set of types contains the usual suspects (strings, integer, floats, booleans, lists, sets...) along with algebraic sums and products, called =either= and =struct=.  The primitive types are as boring as can be expected, but =either= and =struct= are the tricky ones.
+
+*** Structs
+
+/Structs/ are the root of all Tkacz's types. they're a combination of named /fields/ of a specific type.  A typical struct would look like this:
+
+#+BEGIN_SRC lisp -n
+  (tkacz/deftype natural-person-name
+                 (prefix :type string)
+                 (first :type string)
+                 (middle :type string)
+                 (von :type string)
+                 (suffix :type string)
+                 :read '((string) . 'tkacz/string-to-natural-person-name)
+                 :show '(tkacz/natural-person-name-to-string))
+
+  (tkacz/deftype person
+                 (natural :type bool :default t)
+                 (name :type ,(if tzo/natural-of-person-name self
+                                natural-person-name
+                                string))
+                 (abbrev :exists ,(tzo/person-natural self)
+                         :type string))
+#+END_SRC
+
+The =tkacz/deftype= macro creates a series of functions in the =tzo/= pseudo-namespace:
+
+ - a function called =tzo/make-[structname]= (here, =tzo/make-person=), which takes an unspecified list of arguments and consumes them in the order the fields are defined.
+ - a function for each reader, in the form =tzo/read-structname-from-type1-type2-...= (here, =tzo/read-person-from-string=)
+ - a function =tzo/show-person=.
+ - accessor functions for each field, of the form =tzo/field-name-of-struct-name=.
+ - type-predicate functions for each field, of the form =tzo/field-name-of-struct-name-is-type-p=.
+
+The constructor returns a Tkacz struct object, which is a list of the form:
+
+#+BEGIN_SRC lisp
+      (tzo/struct person
+                  :natural (:type boolean :value t)
+                  :name (:type natural-person-name
+                               :value (tzo/struct-natural-person-name
+                                       :first "Louis"
+                                       :von "de"
+                                       :suffix "Broglie"))
+
+      (tzo/struct person
+                  :natural (:type boolean :value nil)
+                  :name (:type string :value "Federal Bureau of Investigation")
+                  :abbrev (:type string :value "FBI"))
+#+END_SRC
+
+To do so, it populates each field in order.  Populating in order is useful because the type or even existence of fields may depend on other fields.  In this example:
+
+ - The type of =name= depends on whether this is a natural person or not.  Natural persons have names in five parts[fn:3] which can't be abbreviated, others have a simple string.
+
+*** Alternatives (=either=)
+
+Either is a rough equivalent of Haskell's =|=.  It defines a sum type which can be of any of a finite set of type.  A simple example of =either= is:
+
+#+BEGIN_SRC lisp
+  (either string number)
+#+END_SRC
+
+A field of this type can be, guess what, either a string or a number.  Unlike structs, either isn't enough to define a type, and can only be assigned as the type of a struct's field.  Eithers are resolved at struct constructor level, and don't appear in the object itself but are replaced by a value of the chosen type.  For example, if the above definition was the type of a field called =a=, the struct object would only contain:
+
+#+BEGIN_SRC lisp
+  (tzo/struct struct-name :a (:type integer :value 1))
+#+END_SRC
+
+**** TODO Use-case for =either= is missing.
+
+** Entities
+
+Entities are the essential Tkacz type.  They're defined from structs, but unlike structs, entities are named root objects, and not values.  Entity names start by an uppercase letter, and they're defined with the (=tkacz/defentity ENTITY-NAME STRUCT-NAME)= macro:
+
+#+BEGIN_SRC lisp
+  (tkacz/defentity Person person)
+#+END_SRC
+
+Everything Tkacz is meant to keep information about is an entity.  The most important type of Entity is of course Reference, which stores a bibliographic reference.
+
+* Random reflections on edge cases
+
+*** References without a known original publication date
+
+Eg. virtually every ancient work: (Plato, 2004) sounds weird, but we really don't know the exact date /The Sophist/ was written, and publication date is meaningless in the context.
+
+*** «Abstract» references and «virtual» works
+
+**** Multipart works
+
+ - Some works don't actually exist: Hume's /Treatise of Human Nature/ is made of three different books, but some editions merges some, or all, of these books.
+ - This is actually the general issue of multiple volume works.
+ - We could create a =collection= or =multipart= type, which would represent an /abstract/ work as a collection of multiple parts.
+
+**** Non-published works
+
+Some works have not been originally published on papers:
+
+ - Conferences and lectures (Austin's /How to do things with words/, Goodman's /Facts, Fictions, Predictions/, Bourdieu's lectures at the Collège de France...)
+ - Ancient works (Plato, Aristotle...)
+
+***** Conferences and lectures
+
+This is actually an easy case, which could build on the basic relationship between editions.  Something like:
+
+#+BEGIN_SRC lisp
+  (conference Goodman:FactFictionForecast)
+#+END_SRC
+
+**** Works with multiple, different, editions
+
+Eg /Critique of Pure Reason/
+
+To handle these cases, we may create a "virtual" entry, something like:
+
+#+BEGIN_SRC lisp
+  (virtual KRV
+           :title '(("Kritik der reinen Vernunft" :lang de :orig t)
+                    ("Critique de la raison pure" :lang fr))
+                    ("Critique of Pure Reason" :lang en))
+#+END_SRC
+
+** TODO À intégrer
+
+*** Copies/exemplaires
+
+** Data model
+
+#+BEGIN_SRC lisp
+  (entity-type person :fields (
+                               (field natural
+                                      "Whether this person is a natural person"
+                                      :type bool)
+
+                               (field name
+                                      ""
+                                      :type ,(if person-natural self
+                                               (struct
+                                                :prefix string
+                                                :first string
+                                                :middle string
+                                                :von string
+                                                :last string
+
+                                                :readers ((string . natural-name-string-splitter)))
+                                               string))
+
+                               :abbreviation
+                               (:type string :exists ,(not (person-natural self)))))
+
+  (field author :type (either '(
+                                none
+                                (list person))))
+#+END_SRC
+
+* Footnotes
+
+[fn:3] This is an oversimplification, but it's the BibTeX model.
+
+[fn:1] The original implementation is an Emacs Lisp program.  Further developments may convert it to a standalone program, but it would be reasonable that such a program is either a compiled Lisp program, or written in another language an embedding a Lisp machine.
+
+[fn:2] It is hard to avoid that the format /be/ in a specific Lisp dialect.  But this dialect should not command the implementation language of the backend.  This has some obvious consequences on extensibility.
