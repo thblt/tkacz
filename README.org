@@ -4,6 +4,14 @@
 
 This document describes yet another instantiation of my attempts to create a sane reference manager that could actually /improve/ rather than degrade my bibliography/PDF management workflows.
 
+* Contents :TOC_1:
+- [[#introduction-doing-two-things-and-doing-them-well][Introduction: doing two things and doing them well]]
+- [[#basic-usage][Basic usage]]
+- [[#implementation][Implementation]]
+- [[#clientserver-protocol][Client/server protocol]]
+- [[#random-reflections-on-edge-cases][Random reflections on edge cases]]
+- [[#footnotes][Footnotes]]
+
 * Introduction: doing two things and doing them well
 
 Why yet another reference manager?  The first goal of Tkacz is to be usable for very large bibliographies in the field of historical sciences, with a strong focus on contemporary history of science, although it shouldn't be restricted to a specific field.  Current document/management software fall in one of two categories, each with its own shortcomings:
@@ -22,9 +30,9 @@ The goal of Tkacz is to “do /two/ things, and do them well”: to serve as a d
 
    - Nicely deal with *complex or unusual entities*: manuscripts, unpublished works, posthumous publications, etc.  This means a more complex data model that most reference managers provide, and if possible an /extensible/ data model.
 
-   - Prefer *objects over strings* for qualified properties.  Authors, for example: attribution is important, and attribution can be tricky; it's thus better that the =author= field takes a series of person objects, optionally parameterized, insted of a list of strings.  This helps solve three problems: a) it allows to keep notes on persons as well, which can be quickly retrieved and are connected to this person's works; b) it nicely handles cases where a given person published under multiple names, or published anonymous works, making it easy to present the complete list of someone's works, regardless of the name they were published under; c) it also, obviously, makes typos much easier to detect and correct.
+   - Prefer *objects over strings* for qualified properties.  Authors, for example: attribution is important, and attribution can be tricky; it's thus better that the =author= field takes a series of person objects, optionally parameterized, instead of a list of strings.  This helps solve three problems: a) it allows to keep notes on persons as well, which can be quickly retrieved and are connected to this person's works; b) it nicely handles cases where a given person published under multiple names, or published anonymous works, making it easy to present the complete list of someone's works, regardless of the name they were published under; c) it also, obviously, makes typos much easier to detect and correct.
 
-   - Provide advanced *classification* mechanisms: hierarchical or flat collections, tags, etc.  Because we use objects rather than strings, a good deal of classification can be automated: works by this author, works in this journal, etc.  Classification also allows to consider objects as topics: it is not uncommon, eg. in philosophy or literature, that the topic of a book is the author of other books.  Friedrich Nietzsche is the /author/ of the /Geneology of Morals/, and the /topic/ of Heidegger's /Nietzsche/.
+   - Provide advanced *classification* mechanisms: hierarchical or flat collections, tags, etc.  Because we use objects rather than strings, a good deal of classification can be automated: works by this author, works in this journal, etc.  Classification also allows to consider objects as topics or more generally classes: it is not uncommon, eg. in philosophy or literature, that the topic of a book is the author of other books.  Friedrich Nietzsche is the /author/ of the /Geneology of Morals/, and the /topic/ of Heidegger's /Nietzsche/.
 
    - Provide just as powerful *annotation* features.
 
@@ -40,19 +48,119 @@ The goal of Tkacz is to “do /two/ things, and do them well”: to serve as a d
 
    - Make the *database history* easy to browse, review, and understand.  Nothing frightens me more than undocumented and non-versioned binary databases with quirky UIs that make it hard to get a grasp of what's going on (yes, [[https://www.readcube.com/papers/][Papers]], I'm looking at you).  The database will be in a Lisp-like syntax (think XML with parentheses), with Git integration out of the box.  A change = a commit, with a meaningful message.  This leaves the user free to rebase, reorder or squash commits before pushing, and should make it trivial to keep a perfectly clean history.
 
-* Usage
+* Basic usage
 
-When started with =M-x tkacz RET=, Tkacz shows a list of all references it has in store.  It can also show a list of any other type of entities: to do so, press e, then select the entity you want shown.  There are four by default: references (=r=), persons (=p=), publishers (=b=), and journals (=j=).
+when started with =M-x tkacz RET=, Tkacz shows a list of all references it has in store.  It can also show a list of any other type of entities: to do so, press e, then select the entity type you want.  There are four by default: references (=r=), persons (=p=), publishers (=b=), and journals (=j=).
 
 By default, entities are displayed in so-called natural format, they can also be shown in tabulated format by pressing ===.
 
-** Creating references
+** Working with references
+
+*** Creating references
 
 There are multiple ways to create new references:
 
  - Press =n n= in the references view to display an input form where you can manually fill fields.  This is the most tedious way, and should generally be avoided.
- - =n u= will prompt for a URL, then do its best to build a reference out of it.  If possible, it will assimilate the associated PDF as a copy of the reference.  =n U= does the same in a loop, which is useful if you're browsing the web in search for documentation.  To create references from a web browser, simply configure it to =(eval)= =(tkacz/create-reference-from-url)= or (=tkacz/create-reference-from-html)= on the Emacs daemon.
- - =n d= will show a drop area on which you can drag and drop virtually everything, with a strong preference for URLs and PDFs.
+ - =n u= will prompt for a URL, then do its best to build a reference out of it.  If possible, it will assimilate the associated PDF as a copy of the reference.  =n U= does the same in a loop, which is useful if you're browsing the web in search for documentation (terminate with =C-g=).  To create references from a web browser, simply configure it to call =(tkacz/create-reference-from-url)= or (=tkacz/create-reference-from-html)= on the Emacs daemon.
+ - Similarly, =n f= will prompt for a file, =n F= will do so in a loop.
+ - =n d= will show a drop area on which you can drag and drop virtually everything, although with a strong preference for URLs and PDFs.
+
+*** Viewing and editing references
+
+From the list view, press =<RET>= to open or focus editor view.
+
+** Organizing references
+
+Tkacz classification system is made of two distinct mechanisms: *taxonomies* and *contexts*.
+
+*** Taxonomies
+
+Taxonomies are hierarchical trees whose branches and leaves may contain entities of various types.
+
+ - =:context nil= :: if true, this category is treated as a *context*.
+ - =:incontexts nil= :: the contexts this category is meaningful in.
+ - =:superclass t= :: if true, this branch contains the entities its children contains.
+ - =:accept-entities t= :: if
+ - =:accept-branches t= ::
+
+By default, children inherit all of their parent properties.  This can be overriden by passing each property a second argument to be used as the default value for its children.  Eg, the root context taxonomy has the property =:context nil t=
+
+Branches can be of two types:
+
+ - Standard branches
+ - Selection branches are queries (think of OSX's Smart Folders)
+
+*** Contexts
+
+Contexts are branches and leaves of a taxonomy.  Contexts are how Tkacz help manage huge collections of possibly unrelated entities.  If you're working on, eg, your PhD in history of psychiatry, you don't want all your computer science articles collection popping up in the list.  Contexts are taxonomies, but the contract with the UI is different:
+
+ - Contexts are used as first-order filters.  In the default UI, =C= is used to toggle between contexts.
+ - When toggling back to a previous context, secondary filters are to be restored as they were.
+
+** Querying the database
+
+What's good is a personal library if you can't find anything inside?  Tkacz comes with two powerful query systems.  The coolest one is a formal search syntax, the fastest one is full-text search.
+
+*** Formal queries
+
+Formal queries are especially useful for building collections and taxinomies.  They take the following form:
+
+#+BEGIN_SRC lisp
+  ((type book)
+   (by MichelFoucault)
+   (date (between 1960 1980)))
+#+END_SRC
+
+Multiple values can be searched on a single selector.  Into French Theory?
+
+#+BEGIN_SRC lisp
+  ((type book article)
+   (by GillesDeleuze JacquesDerrida JacquesLacan MichelFoucault)))
+#+END_SRC
+
+Need the complete works of someone, including books they edited?
+
+#+BEGIN_SRC lisp
+  (((author editor) PierreBourdieu))
+#+END_SRC
+
+Notice the =car= of each s-expression is the field, the whole =cdr= is values.
+
+Standard boolean operators are available, of course:
+
+#+BEGIN_SRC lisp
+  (not (and (author RobertStoller) (author RobertGreen)))
+  (or (date (between 1910 1930)) (date (between 1950 1965)))
+#+END_SRC
+
+Some basic capture and logic is available.  You can search for a book by at least two of a group of authors by searching like this:
+
+#+BEGIN_SRC lisp
+  ;; Set the original author list
+  (let ([authors (AlonzoChurch KurtGödel AlanTuring)])
+      ;; Do twice
+    (repeat 2
+            ;; Capture the matched author as capt
+            (capture capt (by authors))
+            ;; Remove the matched author from list before searching again
+            (set authors (remove capt authors))))
+#+END_SRC
+
+*** TODO Question on formal searches
+
+ - How do we search for, eg, people who wrote books?
+
+ - How do we restrict search to given taxonomic branch?
+
+ - Need specification searching text fields.  We need "like", "contains", "starts with" and "regexp match", etc.
+
+*** Full-text search
+
+Just type =?= in the UI, and type some search terms.  This is actually just another formal search:  Eg, searching for "popper logic" actually generates:
+
+#+BEGIN_SRC lisp
+  ((fulltext "popper" "logic"))
+#+END_SRC
 
 * Implementation
 
@@ -112,7 +220,7 @@ The constructor returns a Tkacz struct object, which is a list of the form:
 
 To do so, it populates each field in order.  Populating in order is useful because the type or even existence of fields may depend on other fields.  In this example:
 
- - The type of =name= depends on whether this is a natural person or not.  Natural persons have names in five parts[fn:3] which can't be abbreviated, others have a simple string.
+- The type of =name= depends on whether this is a natural person or not.  Natural persons have names in five parts[fn:2] which can't be abbreviated, others have a simple string.
 
 *** Alternatives (=either=)
 
@@ -122,7 +230,7 @@ Either is a rough equivalent of Haskell's =|=.  It defines a sum type which can 
   (either string number)
 #+END_SRC
 
-A field of this type can be, guess what, either a string or a number.  Unlike structs, either isn't enough to define a type, and can only be assigned as the type of a struct's field.  Eithers are resolved at struct constructor level, and don't appear in the object itself but are replaced by a value of the chosen type.  For example, if the above definition was the type of a field called =a=, the struct object would only contain:
+A field of this type can be, guess what, either a string or a number.  Unlike structs, either isn't enough to define a type, and can only be assigned as the type of a struct's field.  Ether's are resolved at struct constructor level, and don't appear in the object itself but are replaced by a value of the chosen type.  For example, if the above definition was the type of a field called =a=, the struct object would only contain:
 
 #+BEGIN_SRC lisp
   (tzo/struct struct-name :a (:type integer :value 1))
@@ -132,13 +240,79 @@ A field of this type can be, guess what, either a string or a number.  Unlike st
 
 ** Entities
 
-Entities are the essential Tkacz type.  They're defined from structs, but unlike structs, entities are named root objects, and not values.  Entity names start by an uppercase letter, and they're defined with the (=tkacz/defentity ENTITY-NAME STRUCT-NAME)= macro:
+Entities are the essential Tkacz type.  They're defined from structs, but unlike structs, entities are named root objects, not values.  Entity names start by an uppercase letter, and they're defined with the (=tkacz/defentity ENTITY-NAME STRUCT-NAME)= macro:
 
 #+BEGIN_SRC lisp
   (tkacz/defentity Person person)
 #+END_SRC
 
 Everything Tkacz is meant to keep information about is an entity.  The most important type of Entity is of course Reference, which stores a bibliographic reference.
+
+** Taxonomies
+
+Taxonomies are trees.  Taxonomy objects are structs with the following attributes:
+
+| Name      | Default  | Meaning                              |
+|-----------+----------+--------------------------------------|
+| =name=      | /required/ | The name of this branch              |
+| =parent=    | nil      | parent branch                        |
+| =gender=    | true     | whether this branch is a gender      |
+| =showempty= | false    | Whether to show this branch if empty |
+
+
+- =parent= is nil at the root branch of a tree.
+- An =electric= branch is created programmatically, and won't be serialized.  This implies that =accept-subtrees= and =accept-entities= are false and all children inherit them as false.
+- A =gender= is a branch which contains the leaves of its children (the way, in biology, a gender is made of its species)
+- =showempty= hides a branch and all its subtrees if they contain no entities, and only in this case.
+
+There are two kind of branches: standard and queries.  Query branches can do two things: they can treat their result as a list of entities, or as a list of branches which each receive a result and use it on a second, standard query.
+
+*** TODO Standard branches
+
+
+
+*** Query branches
+
+The behavior of query branches is defined by their =gender= field.  If =gender= is true, these branches contain their results as leaves, and subbranches may contain other queries which refine the original query (/ie/, they apply on the first result set, so subbranches are necessarily strict subsets of their parents)
+
+Query branches have an extra =query= attribute, which holds the query.
+
+Also, query branches:
+
+ - cannot have results be manually added/removed.
+ - non-gender query branches cannot have subtrees added/removed.
+
+** Git support
+
+* Client/server protocol
+
+The Tkacz program is a simple server able to talk to various clients.  The CLI program itself isn't made to be used by humans, but only for programs to interact with it.  The initial implementation uses s-expressions for requests and responses, because a they're) really easy to parse; and b) both the server and original client are written in Lisp.  Client writes to server's stdin to send requests of the form:
+
+#+BEGIN_SRC lisp
+  (req ID BODY)
+#+END_SRC
+
+The client is responsible for giving each request a session-unique ID, as the server provides no guarantee on the order of responses.  Replies are written to stdout, wrapped in:
+
+#+BEGIN_SRC lisp
+  (res ID BODY)
+#+END_SRC
+
+** Starting a session
+
+To begin a session, the client sends:
+
+#+BEGIN_SRC lisp
+  (tkacz?)
+#+END_SRC
+
+to which the server replies with the version message:
+
+#+BEGIN_SRC lisp
+  (tkacz! :protocol (0 1 0) :async t)
+#+END_SRC
+
+** Requests
 
 * Random reflections on edge cases
 
@@ -182,43 +356,10 @@ To handle these cases, we may create a "virtual" entry, something like:
                     ("Critique of Pure Reason" :lang en))
 #+END_SRC
 
-** TODO À intégrer
-
-*** Copies/exemplaires
-
-** Data model
-
-#+BEGIN_SRC lisp
-  (entity-type person :fields (
-                               (field natural
-                                      "Whether this person is a natural person"
-                                      :type bool)
-
-                               (field name
-                                      ""
-                                      :type ,(if person-natural self
-                                               (struct
-                                                :prefix string
-                                                :first string
-                                                :middle string
-                                                :von string
-                                                :last string
-
-                                                :readers ((string . natural-name-string-splitter)))
-                                               string))
-
-                               :abbreviation
-                               (:type string :exists ,(not (person-natural self)))))
-
-  (field author :type (either '(
-                                none
-                                (list person))))
-#+END_SRC
-
 * Footnotes
-
-[fn:3] This is an oversimplification, but it's the BibTeX model.
 
 [fn:1] The original implementation is an Emacs Lisp program.  Further developments may convert it to a standalone program, but it would be reasonable that such a program is either a compiled Lisp program, or written in another language an embedding a Lisp machine.
 
-[fn:2] It is hard to avoid that the format /be/ in a specific Lisp dialect.  But this dialect should not command the implementation language of the backend.  This has some obvious consequences on extensibility.
+[fn:2] This is an oversimplification, but it's the BibTeX model.
+
+[fn:3] It is hard to avoid that the format /be/ in a specific Lisp dialect.  But this dialect should not command the implementation language of the backend.  This has some obvious consequences on extensibility.
