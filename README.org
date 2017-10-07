@@ -356,6 +356,10 @@ To handle these cases, we may create a "virtual" entry, something like:
                     ("Critique of Pure Reason" :lang en))
 #+END_SRC
 
+*** La Fontaine's fables
+
+Louis Marin's /Portrait of the King/ contains a long commentary of Jean de la Fontaine's /The Crow and the Fox/.  If one wanted to take a quick note on that (/ie/, express that =Marin1981=, I, 2 is about the fable, should one look up the original publication year of the whole collection of fables, create records, etc, or could one just create a quick draft entry on "Fables" with a single, unnumbered chapter "The Fox and the Crown" to which Marin1981, I, 2 could point to as a topic?
+
 * Footnotes
 
 [fn:1] The original implementation is an Emacs Lisp program.  Further developments may convert it to a standalone program, but it would be reasonable that such a program is either a compiled Lisp program, or written in another language an embedding a Lisp machine.
