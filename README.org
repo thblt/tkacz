@@ -2,7 +2,10 @@
 #+SUBTITLE: The advanced, extensible and non-existing reference manager.
 #+OPTIONS: toc:2
 
-This document describes yet another instantiation of my attempts to create a sane reference manager that could actually /improve/ rather than degrade my bibliography/PDF management workflows.
+This document describes yet another instantiation of my attempts to create a sane reference manager that could actually /improve/ rather than degrade my bibliography/PDF management workflows.  This is only a project for now, yet a Gitter chat has been created for people interested in providing suggestions or feedback.
+
+#+ATTR_HTML: title="Join the chat at https://gitter.im/thblt/tkacz"
+[[https://gitter.im/thblt/tkacz?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge][file:https://badges.gitter.im/thblt/tkacz.svg]]
 
 * Contents :TOC_1:
 - [[#introduction-doing-two-things-and-doing-them-well][Introduction: doing two things and doing them well]]
