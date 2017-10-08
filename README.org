@@ -364,6 +364,24 @@ Louis Marin's /Portrait of the King/ contains a long commentary of Jean de la Fo
 
 The definition of an entity should include rules for sorting its instances, regardless of the way they're rendered: Jacques Lacan should appear /after/ Sigmund Freud.
 
+*** TODO Text formatting syntax
+
+Since entities describe how they should be displayed, we need a rudimentary text formatting syntax, something that should be trivial to convert to any other syntax, and which could look like:
+
+#+BEGIN_SRC racket
+  (tkacz/format-text
+   (sc "Bourdieu") 'comma "Pierre"
+   'space "et" 'space
+   "Jean-Claude" 'space (sc "Passeron")
+   'comma
+   (italic "La reproduction"
+           'dot
+           "Éléments pour une théorie du système d'enseignement"
+           'dot)
+   "Paris" 'colon "Les éditions de Minuit" 'colon "1970" 'fullstop)
+#+END_SRC
+
+which
 
 * Footnotes
 
