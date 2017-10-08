@@ -9,7 +9,7 @@ This document describes yet another instantiation of my attempts to create a san
 - [[#basic-usage][Basic usage]]
 - [[#implementation][Implementation]]
 - [[#clientserver-protocol][Client/server protocol]]
-- [[#random-reflections-on-edge-cases][Random reflections on edge cases]]
+- [[#specific-difficulties-to-consider][Specific difficulties to consider]]
 - [[#footnotes][Footnotes]]
 
 * Introduction: doing two things and doing them well
@@ -314,13 +314,13 @@ to which the server replies with the version message:
 
 ** Requests
 
-* Random reflections on edge cases
+* TODO Specific difficulties to consider
 
-*** References without a known original publication date
+*** TODO References without a known original publication date
 
 Eg. virtually every ancient work: (Plato, 2004) sounds weird, but we really don't know the exact date /The Sophist/ was written, and publication date is meaningless in the context.
 
-*** «Abstract» references and «virtual» works
+*** TODO «Abstract» references and «virtual» works
 
 **** Multipart works
 
@@ -356,9 +356,14 @@ To handle these cases, we may create a "virtual" entry, something like:
                     ("Critique of Pure Reason" :lang en))
 #+END_SRC
 
-*** La Fontaine's fables
+*** TODO La Fontaine's fables
 
 Louis Marin's /Portrait of the King/ contains a long commentary of Jean de la Fontaine's /The Crow and the Fox/.  If one wanted to take a quick note on that (/ie/, express that =Marin1981=, I, 2 is about the fable, should one look up the original publication year of the whole collection of fables, create records, etc, or could one just create a quick draft entry on "Fables" with a single, unnumbered chapter "The Fox and the Crown" to which Marin1981, I, 2 could point to as a topic?
+
+*** TODO Sorting
+
+The definition of an entity should include rules for sorting its instances, regardless of the way they're rendered: Jacques Lacan should appear /after/ Sigmund Freud.
+
 
 * Footnotes
 
