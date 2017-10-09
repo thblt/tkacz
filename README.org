@@ -17,7 +17,7 @@ This document describes yet another instantiation of my attempts to create a san
 
 * Introduction: doing two things and doing them well
 
-Why yet another reference manager?  The first goal of Tkacz is to be usable for very large bibliographies in the field of historical sciences, with a strong focus on contemporary history of science, although it shouldn't be restricted to a specific field.  Current document/management software fall in one of two categories, each with its own shortcomings:
+Why yet another reference manager?  The first goal of Tkacz is to be usable for very large bibliographies in the field of historical sciences, with a strong focus on contemporary history of science, although it shouldn't be restricted to a specific field or research domain.  Large bibliographies need good organization capabilities, history requires a powerful enough data model to cleanly represent complex or unusual documents and relationships between documents, and all research require open, documented and easily usable formats that doesn't tie their users to a particular piece software.  Tkacz tries to satisfies these needs by addressing both the shortcomings of existing document managers and reference managers:
 
 *Document managers*
 usually have very powerful classification, ordering and annotation features, but a very poor data model, which makes it hard to actually meaningfully and formally /describe/ documents by providing formal bibliographic references.
