@@ -19,16 +19,17 @@ This document describes yet another instantiation of my attempts to create a san
 
 Why yet another reference manager?  The first goal of Tkacz is to be usable for very large bibliographies in the field of historical sciences, with a strong focus on contemporary history of science, although it shouldn't be restricted to a specific field.  Current document/management software fall in one of two categories, each with its own shortcomings:
 
-\paragraph{Document managers} usually have very powerful classification, ordering and annotation features, but a very poor data model, which makes it hard to actually meaningfully and formally /describe/ documents by providing formal bibliographic references.
+*Document managers*
+usually have very powerful classification, ordering and annotation features, but a very poor data model, which makes it hard to actually meaningfully and formally /describe/ documents by providing formal bibliographic references.
 
 Most document management software also assume documents are somehow unique and /sui generis/, where historical sources tend to have significant histories: they may be reprinted, republished, collected and updated, and all of this matters, both for the history of the document and its availability: knowing where to find an obscure article is important.   In the “hard” sciences, the most complicated (significant) thing that can happen to an article is to be withdrawn, and all you're expected to do in this case is not to cite it anymore; but for historical research, withdrawals or reprints are actually significant.
 
 It is also assumed that documents are files, usually PDFs.  But it's often the case that documentation is scattered between different libraries, printed and electronic copies, that not everything has a PDF and not every PDF is complete.
 
-\paragraph{Reference managers} make it easy to reference documents you don't actually own (and often make it the default), and usually have a powerful (or extensible) enough data model to accommodate a lot of information, but they usually fall very short when it comes to classification.  Beyond that, the (potential) power of the data model is not necessarily reflected in all UIs, and some changes that are theoretically possible in the data model will make the data actually unusable.  For instance, handing authors not as strings, but as /objects/ is /theoretically/ feasible in the BibTeX format; but such files would be unusable by the Bib(La)TeX family of programs.
+*Reference managers*
+make it easy to reference documents you don't actually own (and often make it the default), and usually have a powerful (or extensible) enough data model to accommodate a lot of information, but they usually fall very short when it comes to classification.  Beyond that, the (potential) power of the data model is not necessarily reflected in all UIs, and some changes that are theoretically possible in the data model will make the data actually unusable.  For instance, handing authors not as strings, but as /objects/ is /theoretically/ feasible in the BibTeX format; but such files would be unusable by the Bib(La)TeX family of programs.
 
-\paragraph{}
-
+#+LATEX: \paragraph{}
 The goal of Tkacz is to “do /two/ things, and do them well”: to serve as a document manager with the full power of a bibliographical data manager.  That means:
 
    - Nicely deal with *complex or unusual entities*: manuscripts, unpublished works, posthumous publications, etc.  This means a more complex data model that most reference managers provide, and if possible an /extensible/ data model.
