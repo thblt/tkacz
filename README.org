@@ -11,8 +11,10 @@ This document describes yet another instantiation of my attempts to create a san
 - [[#introduction-doing-two-things-and-doing-them-well][Introduction: doing two things and doing them well]]
 - [[#basic-usage][Basic usage]]
 - [[#implementation][Implementation]]
+- [[#ontology][Ontology]]
 - [[#clientserver-protocol][Client/server protocol]]
 - [[#specific-difficulties-to-consider][Specific difficulties to consider]]
+- [[#potential-features-after-01][Potential features after 0.1]]
 - [[#footnotes][Footnotes]]
 
 * Introduction: doing two things and doing them well
@@ -107,7 +109,7 @@ What's good is a personal library if you can't find anything inside?  Tkacz come
 
 *** Formal queries
 
-Formal queries are especially useful for building collections and taxinomies.  They take the following form:
+Formal queries are especially useful for building collections and taxonomies.  They take the following form:
 
 #+BEGIN_SRC lisp
   ((type book)
@@ -130,7 +132,7 @@ Need the complete works of someone, including books they edited?
 
 Notice the =car= of each s-expression is the field, the whole =cdr= is values.
 
-Standard boolean operators are available, of course:
+Standard boolean operators are available, of course.  =and= is always implied.
 
 #+BEGIN_SRC lisp
   (not (and (author RobertStoller) (author RobertGreen)))
@@ -141,7 +143,7 @@ Some basic capture and logic is available.  You can search for a book by at leas
 
 #+BEGIN_SRC lisp
   ;; Set the original author list
-  (let ([authors (AlonzoChurch KurtGödel AlanTuring)])
+  (let ([authors '(AlonzoChurch KurtGödel AlanTuring)])
       ;; Do twice
     (repeat 2
             ;; Capture the matched author as capt
@@ -150,15 +152,7 @@ Some basic capture and logic is available.  You can search for a book by at leas
             (set authors (remove capt authors))))
 #+END_SRC
 
-*** TODO Question on formal searches
-
- - How do we search for, eg, people who wrote books?
-
- - How do we restrict search to given taxonomic branch?
-
- - Need specification searching text fields.  We need "like", "contains", "starts with" and "regexp match", etc.
-
-*** Full-text search
+** Full-text search
 
 Just type =?= in the UI, and type some search terms.  This is actually just another formal search:  Eg, searching for "popper logic" actually generates:
 
@@ -264,15 +258,13 @@ Taxonomies are trees.  Taxonomy objects are structs with the following attribute
 | =showempty= | false    | Whether to show this branch if empty |
 
 
-- =parent= is nil at the root branch of a tree.
-- An =electric= branch is created programmatically, and won't be serialized.  This implies that =accept-subtrees= and =accept-entities= are false and all children inherit them as false.
+- =parent= is void at the root branch of a tree.
 - A =gender= is a branch which contains the leaves of its children (the way, in biology, a gender is made of its species)
 - =showempty= hides a branch and all its subtrees if they contain no entities, and only in this case.
 
 There are two kind of branches: standard and queries.  Query branches can do two things: they can treat their result as a list of entities, or as a list of branches which each receive a result and use it on a second, standard query.
 
 *** TODO Standard branches
-
 
 
 *** Query branches
@@ -283,40 +275,113 @@ Query branches have an extra =query= attribute, which holds the query.
 
 Also, query branches:
 
- - cannot have results be manually added/removed.
+ - cannot have entities be manually added/removed.
  - non-gender query branches cannot have subtrees added/removed.
+ - gender query branches may have a single "template" child branch, expressing a query with a placeholder for result.  Eg, a query branch with =((type person))= could have a subbranch =((type reference) (author person))=.
 
-** Git support
+**** TODO Breakdown branches?
+
+Could we have a query branch listing persons, then subbranches listing their work =((author (parent-result)))=, /then subsubbranches distributing works by their types/?  We could call them "breakdown branches".
+
+This could be made by allowing queries to act on the ontology and not only entities.
+
+**** TODO Note to self
+
+Sub-query branches shouldn't need to access more than a result of their parent branch?
+
+** Relationships
+
+Relationships connect entities together
+
+** Queries
+
+Formal queries are actually small programs.  They operate within a context and reduce progressively reduce that context.  Eg, this query:
+
+#+BEGIN_SRC lisp
+  (intersection
+   (type book)
+   (author RobertMusil))
+#+END_SRC
+
+Transforms to a program that restricts a global context (/ie/, a list of entities) to the subset of entities of type book, then reduces this subset to the entries with Robert Musil as an author.
+
+The exact meaning of "transforms to a program" remains to be specified.  It may be possible to use Racket to design a small query DSL, or we could just traverse the s-expression and convert it manually.  Both approaches should be easy enough.
+
+*** TODO [#A] Searching for relationships
+
+This is absolutely critical.
+
+*** TODO How do we search for, eg, people who wrote books?
+
+*** TODO How do we restrict search to given taxonomic branch?
+
+Should be easy: =(in branch ...+)=
+
+*** TODO Need specification for searching text fields
+
+We need "like", "contains", "starts with" and "regexp match", etc.
+
+** File format
+
+The file format should be readable by a human, and git history should be easy to understand.
+
+** TODO Git support
+
+* Ontology
+
+The ontology is the actual data model.  The previous section described the type system; Tkacz builds onto this type system to describe a complete data model suitable for all types of references, and extensible by the user at will.
 
 * Client/server protocol
 
-The Tkacz program is a simple server able to talk to various clients.  The CLI program itself isn't made to be used by humans, but only for programs to interact with it.  The initial implementation uses s-expressions for requests and responses, because a they're) really easy to parse; and b) both the server and original client are written in Lisp.  Client writes to server's stdin to send requests of the form:
-
-#+BEGIN_SRC lisp
-  (req ID BODY)
-#+END_SRC
-
-The client is responsible for giving each request a session-unique ID, as the server provides no guarantee on the order of responses.  Replies are written to stdout, wrapped in:
-
-#+BEGIN_SRC lisp
-  (res ID BODY)
-#+END_SRC
+The Tkacz program is a simple server able to talk to various clients.  The CLI program itself isn't made to be used by humans, but only for programs to interact with it.  The initial implementation uses s-expressions for requests and responses, because a they're) really easy to parse; and b) both the server and original client are written in Lisp.
 
 ** Starting a session
 
 To begin a session, the client sends:
 
 #+BEGIN_SRC lisp
-  (tkacz?)
+  (tkacz elisp)
 #+END_SRC
 
-to which the server replies with the version message:
+Where =tkacz= is the magic handshake command, and =elisp= the dialect the client wishes to be talked in.  To which the server replies with the very welcoming message:
 
 #+BEGIN_SRC lisp
-  (tkacz! :protocol (0 1 0) :async t)
+  (tkacz :protocol (0 1 0))
 #+END_SRC
 
-** Requests
+or the less welcoming version:
+
+#+BEGIN_SRC lisp
+  (abort [msg])
+#+END_SRC
+
+The client must send a =db-load= or =db-create= as its first request, or the server will abort communication[fn:3].
+
+** Requests and responses
+
+Client writes to server's stdin to send requests of the form:
+
+#+BEGIN_SRC lisp
+  (request ID BODY)
+#+END_SRC
+
+The client is responsible for giving each request a session-unique ID, as the server provides no guarantee on the order of responses.  Replies are written to stdout, wrapped in:
+
+#+BEGIN_SRC lisp
+  (response ID BODY)
+#+END_SRC
+
+Between requests, server ignores all whitespace and triggers an error for any other input.  Requests are read until a single s-expression is complete, then processed.
+
+** Comments
+
+For debugging purposes, client/server sessions can include comments.  Lines matching =^;= are to be ignored by both parties.  If non Lisp-like syntaxes are implemented, a different comment syntax may be used.  Eg, in JSON:
+
+#+BEGIN_SRC json
+  { "comment": "This is a comment and should be ignored by any party." }
+#+END_SRC
+
+In production, comments should be absolutely avoided.
 
 * TODO Specific difficulties to consider
 
@@ -387,10 +452,18 @@ Since entities describe how they should be displayed, we need a rudimentary text
 
 which
 
+* TODO Potential features after 0.1
+
+** TODO Completion on queries
+
+The server could act provide completion and syntax checking services for queries and similar
+
 * Footnotes
 
 [fn:1] The original implementation is an Emacs Lisp program.  Further developments may convert it to a standalone program, but it would be reasonable that such a program is either a compiled Lisp program, or written in another language an embedding a Lisp machine.
 
 [fn:2] This is an oversimplification, but it's the BibTeX model.
 
-[fn:3] It is hard to avoid that the format /be/ in a specific Lisp dialect.  But this dialect should not command the implementation language of the backend.  This has some obvious consequences on extensibility.
+[fn:3] Tkacz works on one, and only one, database at a time.  By design, it's pointless to have more than one.
+
+[fn:4] It is hard to avoid that the format /be/ in a specific Lisp dialect.  But this dialect should not command the implementation language of the backend.  This has some obvious consequences on extensibility.
