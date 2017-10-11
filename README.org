@@ -9,7 +9,8 @@ This document describes yet another instantiation of my attempts to create a san
 
 * Contents :TOC_1:
 - [[#introduction-doing-two-things-and-doing-them-well][Introduction: doing two things and doing them well]]
-- [[#user-perspective][User perspective]]
+- [[#user-interface][User interface]]
+- [[#standard-ontology][Standard ontology]]
 - [[#internals][Internals]]
 - [[#unresolved-issues][Unresolved issues]]
 - [[#potential-features-after-01][Potential features after 0.1]]
@@ -54,7 +55,7 @@ The goal of Tkacz is to “do /two/ things, and do them well”: to serve as a d
 
 This is a *design document* for Tkacz, which should work as a specification for both the user interface and the implementation.
 
-* User perspective
+* User interface
 
 when started with =M-x tkacz RET=, Tkacz shows a list of all references it has in store.  It can also show a list of any other type of entities: to do so, press e, then select the entity type you want.  There are three by default: references (=r=), persons (=p=), and journals (=j=).
 
@@ -79,29 +80,18 @@ From the list view, press =<RET>= to open or focus editor view.
 
 Tkacz classification system is made of two distinct mechanisms: *taxonomies* and *contexts*.
 
-*** Taxonomies
+*** TODO Taxonomies
 
 Taxonomies are hierarchical trees whose branches and leaves may contain entities of various types.
 
- - =:context nil= :: if true, this category is treated as a *context*.
- - =:incontexts nil= :: the contexts this category is meaningful in.
- - =:superclass t= :: if true, this branch contains the entities its children contains.
- - =:accept-entities t= :: if
- - =:accept-branches t= ::
-
-By default, children inherit all of their parent properties.  This can be overriden by passing each property a second argument to be used as the default value for its children.  Eg, the root context taxonomy has the property =:context nil t=
-
-Branches can be of two types:
-
- - Standard branches
- - Selection branches are queries (think of OSX's Smart Folders)
-
-*** Contexts
+*** TODO Contexts
 
 Contexts are branches and leaves of a taxonomy.  Contexts are how Tkacz help manage huge collections of possibly unrelated entities.  If you're working on, eg, your PhD in history of psychiatry, you don't want all your computer science articles collection popping up in the list.  Contexts are taxonomies, but the contract with the UI is different:
 
  - Contexts are used as first-order filters.  In the default UI, =C= is used to toggle between contexts.
  - When toggling back to a previous context, secondary filters are to be restored as they were.
+
+*** TODO Relationships
 
 ** Querying the database
 
@@ -160,13 +150,105 @@ Just type =?= in the UI, and type some search terms.  This is actually just anot
   ((fulltext "popper" "logic"))
 #+END_SRC
 
+* Standard ontology
+
+The ontology is the actual data model.  The next section describes the type system used to implement this model.
+
+** Entity types
+
+#+BEGIN_SRC dot :cmd dot :file images/EntityHierarchy.png :exports results
+  digraph main {
+      node [shape=box, style=rounded]
+
+
+      Entity -> Document;
+
+      Document -> Article;
+      Article -> "Journal article";
+      Article -> "Newspaper article";
+      Article -> "Magazine article";
+
+      Document -> Book
+
+      Document -> Chapter
+
+      Document -> Collection
+
+      Document -> Legal
+
+      Legal -> "Court decision"
+      "Court decision" -> France
+      France [label="French court"]
+      France -> "Cour de cassation"
+      France -> "Tribunal correctionnel"
+      France -> ellipsis
+
+      "Court decision" -> "US Court"
+      "US Court" -> "US Supreme Court"
+      "US Court" -> ellipsis3
+
+      "Court decision" -> ellipsis2
+
+      Legal -> Patent
+
+      Legal -> pubrec
+      pubrec [label="Public record"]
+      pubrec -> "Birth certificate"
+      pubrec -> "Death certificate"
+      pubrec -> "Marriage certificate"
+
+
+      Document -> Report
+
+      Document -> Unpublished
+
+      Unpublished -> Archive
+      Unpublished -> Leaflet
+      Archive -> Correspondance
+
+      ellipsis,
+      ellipsis2,
+      ellipsis3 [label="..."]
+
+      Entity -> Person
+
+      Person -> "Natural person";
+      Person -> "Legal person";
+
+      Entity -> Journal;
+
+      Journal -> Magazine;
+      Journal -> Newspaper;
+      Journal -> "Scientific journal";
+
+      Entity,
+      Document,
+      Article,
+      Legal,
+      pubrec,
+      Unpublished,
+      Archive,
+      Journal,
+      Person [shape=invhouse, style=filled, fillcolor=lightgray]
+    }
+#+END_SRC
+
+#+RESULTS:
+[[file:images/EntityHierarchy.png]]
+
 * Internals
 ** Type system
 
-
 Tkacz has strong implicit typing, but its type system comes with its own set of quirks.  The set of types contains the usual suspects (strings, integer, floats, booleans, lists, sets...) along with algebraic sums and products, called =either= and =struct=.  The primitive types are as boring as can be expected, but =either= and =struct= are more interesting.
 
-*** Types
+*** Primitive types
+
+ - String
+ - Integer
+ - Float
+ - Boolean
+ - list
+
 *** Structs
 
 /Structs/ form the most essential of all Tkacz's types, and they're the underlying mechanism for entities.  Structs are a combination of named and typed /fields/, which can have a default value; optional validators.
@@ -178,7 +260,6 @@ Structs fields can be of three types:
  - A primitive type: =string=, =boolean=, =float=, etc.  List types are described as =(list TYPE)=, sets as =(set TYPE)=.
  - Another structure type: =natural-person-name=.
  - An entity type: =(entity Person)=
-
 
 **** Validation
 
@@ -204,7 +285,27 @@ A field of this type can be, guess what, either a string or a number.  Unlike st
   (tzo/struct struct-name :a (:type integer :value 1))
 #+END_SRC
 
-**** TODO Use-case for =either= is missing.
+**** TODO Use-case for =either= is missing
+
+**** TODO Either is also an enum
+
+Could =either= be used as an enum type?
+
+#+BEGIN_SRC lisp
+  (either "This" "That" 3)
+#+END_SRC
+
+With eventually a fallback/custom case?
+
+#+BEGIN_SRC lisp
+  (either "This" "That" string?)
+#+END_SRC
+
+and taking pairs to differentiate between values an UI representation?
+
+#+BEGIN_SRC
+  (either ((tr "Yes") . #t) ((tr "No") . #f) ("Something else" . string?))
+#+END_SRC
 
 *** Entities
 
@@ -218,7 +319,7 @@ Everything Tkacz is meant to keep information about is an entity.  The most impo
 
 Informally, an entity is something with an actual existence.  A person is an entity, not a title or a publication year.  Yet, this criterion should be understood in a quite relaxed fashion, and not as a strict requirement:  it's nice to be able to group an article, its extended reprint as a book chapter, and its translation to another language has no existence /per se/ as instances of a single "thing" which lack any actual existence, but helps keep track of various transformations of this document.  Such a thing is an entity nonetheless, because it's useful to consider it as one.
 
-*** Taxonomies
+** Taxonomies
 
 Taxonomies are trees.  Taxonomy objects are structs with the following attributes:
 
@@ -236,9 +337,9 @@ Taxonomies are trees.  Taxonomy objects are structs with the following attribute
 
 There are two kind of branches: standard and queries.  Query branches can do two things: they can treat their result as a list of entities, or as a list of branches which each receive a result and use it on a second, standard query.
 
-**** TODO Standard branches
+*** TODO Standard branches
 
-**** Query branches
+*** Query branches
 
 The behavior of query branches is defined by their =gender= field.  If =gender= is true, these branches contain their results as leaves, and subbranches may contain other queries which refine the original query (/ie/, they apply on the first result set, so subbranches are necessarily strict subsets of their parents)
 
@@ -250,21 +351,21 @@ Also, query branches:
 - non-gender query branches cannot have subtrees added/removed.
 - gender query branches may have a single "template" child branch, expressing a query with a placeholder for result.  Eg, a query branch with =((type person))= could have a subbranch =((type reference) (author person))=.
 
-***** TODO Breakdown branches?
+**** TODO Breakdown branches?
 
 Could we have a query branch listing persons, then subbranches listing their work =((author (parent-result)))=, /then subsubbranches distributing works by their types/?  We could call them "breakdown branches".
 
 This could be made by allowing queries to act on the ontology and not only entities.
 
-***** TODO Note to self
+**** TODO Note to self
 
 Sub-query branches shouldn't need to access more than a result of their parent branch?
 
-*** Relationships
+** Relationships
 
 Relationships connect entities together
 
-*** Queries
+** Query language
 
 Formal queries are actually small programs.  They operate within a context and reduce progressively reduce that context.  Eg, this query:
 
@@ -278,87 +379,29 @@ Transforms to a program that restricts a global context (/ie/, a list of entitie
 
 The exact meaning of "transforms to a program" remains to be specified.  It may be possible to use Racket to design a small query DSL, or we could just traverse the s-expression and convert it manually.  Both approaches should be easy enough.
 
-**** TODO [#A] Searching for relationships
+*** TODO [#A] Searching for relationships
 
 This is absolutely critical.
 
-**** TODO How do we search for, eg, people who wrote books?
+*** TODO How do we search for, eg, people who wrote books?
 
-**** TODO How do we restrict search to given taxonomic branch?
+*** TODO How do we restrict search to a given taxonomic branch?
 
 Should be easy: =(in branch ...+)=
 
-**** TODO Need specification for searching text fields
+*** TODO How do we negate search terms?
+
+*** TODO Need specification for searching text fields
 
 We need "like", "contains", "starts with" and "regexp match", etc.
 
-*** File format
+** File format
 
 The file format should be readable by a human, and git history should be easy to understand.
 
-*** TODO Git support
+** TODO Git support
 
-** Standard ontology
-
-The ontology is the actual data model.  The previous section described the type system; Tkacz builds onto this type system to describe a complete data model suitable for all types of references, and extensible by the user at will.
-
-*** The Document% entity type
-
-=Document%= uses the following struct hierarchy.
-
-#+BEGIN_SRC dot :cmd dot :file images/DocumentHierarchy.png :exports results
-    digraph struct {
-      Document -> Article;
-      Article -> "Journal article";
-      Article -> "Newspaper article";
-      Article -> "Magazine article";
-
-      Document -> Book
-
-      Document -> Chapter
-
-      Document -> Collection
-
-      Document -> Legal
-
-      Legal -> "Court decision"
-      "Court decision" -> France
-      France [label="French court"]
-      France -> "Cour de cassation"
-      France -> "Tribunal correctionnel"
-      France -> ellipsis
-
-      "Court decision" -> ellipsis2
-
-      Legal -> Patent
-
-      Document -> Unpublished
-
-      Unpublished -> Archive
-      Unpublished -> Leaflet
-      Archive -> Correspondance
-
-      ellipsis [label="..."]
-      ellipsis2 [label="..."]
-  }
-#+END_SRC
-
-#+RESULTS:
-[[file:images/DocumentHierarchy.png]]
-
- - =reference%= (virtual)
-   - =article%= (virtual) ::
-     - =journal-article%=
-     - =magazine-article%=
-     - =newspaper-article%=
-   - =book%= (virtual) ::
-   - =chapter%=
-   - =collection%=
-   - =unpublished%=
-
-**** Utility traits
-
-
+Git is an integral part of Tkacz' storage subsystem, and is managed automatically.  Tkacz stages changes, commits them and can optionally push them to a remote repository.
 
 ** Client/server protocol
 
