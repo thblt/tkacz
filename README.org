@@ -156,81 +156,8 @@ The ontology is the actual data model.  The next section describes the type syst
 
 ** Entity types
 
-#+BEGIN_SRC dot :cmd dot :file images/EntityHierarchy.png :exports results
-  digraph main {
-      node [shape=box, style=rounded]
-
-
-      Entity -> Document;
-
-      Document -> Article;
-      Article -> "Journal article";
-      Article -> "Newspaper article";
-      Article -> "Magazine article";
-
-      Document -> Book
-
-      Document -> Chapter
-
-      Document -> Collection
-
-      Document -> Legal
-
-      Legal -> "Court decision"
-      "Court decision" -> France
-      France [label="French court"]
-      France -> "Cour de cassation"
-      France -> "Tribunal correctionnel"
-      France -> ellipsis
-
-      "Court decision" -> "US Court"
-      "US Court" -> "US Supreme Court"
-      "US Court" -> ellipsis3
-
-      "Court decision" -> ellipsis2
-
-      Legal -> Patent
-
-      Legal -> pubrec
-      pubrec [label="Public record"]
-      pubrec -> "Birth certificate"
-      pubrec -> "Death certificate"
-      pubrec -> "Marriage certificate"
-
-
-      Document -> Report
-
-      Document -> Unpublished
-
-      Unpublished -> Archive
-      Unpublished -> Leaflet
-      Archive -> Correspondance
-
-      ellipsis,
-      ellipsis2,
-      ellipsis3 [label="..."]
-
-      Entity -> Person
-
-      Person -> "Natural person";
-      Person -> "Legal person";
-
-      Entity -> Journal;
-
-      Journal -> Magazine;
-      Journal -> Newspaper;
-      Journal -> "Scientific journal";
-
-      Entity,
-      Document,
-      Article,
-      Legal,
-      pubrec,
-      Unpublished,
-      Archive,
-      Journal,
-      Person [shape=invhouse, style=filled, fillcolor=lightgray]
-    }
+#+BEGIN_SRC sh :file images/EntityHierarchy.png :exports results
+  racket ontology.rkt | dot -T png
 #+END_SRC
 
 #+RESULTS:
