@@ -461,7 +461,8 @@ Queries could be able to return informations about the ontology itself, and
 
 ** TODO Traits on entity objects
 
-We could consider a system of /traits/ to further define entities.  These traits would apply to /objects/, not /classes/.  For instance, academic position (Eg "/someone/ was the Roger Rabbit Professor of Metaethics at Harvard from 1963 to 1985") may be useful as an attribute of a physical person; yet it isn't meaningful for every single person.  We could then define /traits/ as optional attributes of a given entity type.  In this case, the trait "academic position" would allow to assign a series of academic positions to a given person.
+We could consider a system of /traits/ to further specify entities.  These traits would apply to /objects/, not /classes/.  For instance, academic position (Eg "/someone/ was the Roger Rabbit Professor of Metaethics at Harvard from 1963 to 1985") may be useful as an attribute of a physical person; yet it isn't meaningful for every single person.  We could then define /traits/ as optional attributes of a given entity type.  In this case, the trait "academic position" would allow to assign a series of academic positions to a given person.
+
 
 * Footnotes
 
