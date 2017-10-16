@@ -33,25 +33,25 @@ make it easy to reference documents you don't actually own (and often make it th
 #+LATEX: \paragraph{}
 The goal of Tkacz is to “do /two/ things, and do them well”: to serve as a document manager with the full power of a bibliographical data manager.  That means:
 
-   - Nicely deal with *complex or unusual entities*: manuscripts, unpublished works, posthumous publications, etc.  This means a more complex data model that most reference managers provide, and if possible an /extensible/ data model.
+ - Nicely deal with *complex or unusual entities*: manuscripts, unpublished works, posthumous publications, etc.  This means a more complex data model that most reference managers provide, and if possible an /extensible/ data model.
 
-   - Prefer *objects over strings* for qualified properties.  Authors, for example: attribution is important, and attribution can be tricky; it's thus better that the =author= field takes a series of person objects, optionally parameterized, instead of a list of strings.  This helps solve three problems: a) it allows to keep notes on persons as well, which can be quickly retrieved and are connected to this person's works; b) it nicely handles cases where a given person published under multiple names, or published anonymous works, making it easy to present the complete list of someone's works, regardless of the name they were published under; c) it also, obviously, makes typos much easier to detect and correct.
+ - Prefer *objects over strings* for qualified properties.  Authors, for example: attribution is important, and attribution can be tricky; it's thus better that the =author= field takes a series of person objects, optionally parameterized, instead of a list of strings.  This helps solve three problems: a) it allows to keep notes on persons as well, which can be quickly retrieved and are connected to this person's works; b) it nicely handles cases where a given person published under multiple names, or published anonymous works, making it easy to present the complete list of someone's works, regardless of the name they were published under; c) it also, obviously, makes typos much easier to detect and correct.
 
-   - Provide advanced *classification* mechanisms: hierarchical or flat collections, tags, etc.  Because we use objects rather than strings, a good deal of classification can be automated: works by this author, works in this journal, etc.  Classification also allows to consider objects as topics or more generally classes: it is not uncommon, eg. in philosophy or literature, that the topic of a book is the author of other books.  Friedrich Nietzsche is the /author/ of the /Geneology of Morals/, and the /topic/ of Heidegger's /Nietzsche/.
+ - Provide advanced *classification* mechanisms: hierarchical or flat collections, tags, etc.  Because we use objects rather than strings, a good deal of classification can be automated: works by this author, works in this journal, etc.  Classification also allows to consider objects as topics or more generally classes: it is not uncommon, eg. in philosophy or literature, that the topic of a book is the author of other books.  Friedrich Nietzsche is the /author/ of the /Geneology of Morals/, and the /topic/ of Heidegger's /Nietzsche/.
 
-   - Provide just as powerful *annotation* features.
+ - Provide just as powerful *annotation* features.
 
-   - Express *relationships* between entities: an article and a reprint, or a withdrawal, a book and its editions, a multipart work and its parts, etc.
+ - Express *relationships* between entities: an article and a reprint, or a withdrawal, a book and its editions, a multipart work and its parts, etc.
 
-   - Help represent the *history* of references: an article may have been published in a journal, then reprinted multiple times in different books.  Where do I look for Canguilhem's 1966 article “Mort de l'homme ou épuisement du cogito?”, if I can't get the original journal?  Has it been translated into English, if I need to cite it in an English article, and where to find the translation?
+ - Help represent the *history* of references: an article may have been published in a journal, then reprinted multiple times in different books.  Where do I look for Canguilhem's 1966 article “Mort de l'homme ou épuisement du cogito?”, if I can't get the original journal?  Has it been translated into English, if I need to cite it in an English article, and where to find the translation?
 
-   - Make it hard to introduce inconsistencies or typos in the database.  Journals, like persons, are objects: if the object describes the publishing rate, then no reference could contain a volume/issue number inconsistent with publication date without at least generating a warning.
+ - Make it hard to introduce inconsistencies or typos in the database.  Journals, like persons, are objects: if the object describes the publishing rate, then no reference could contain a volume/issue number inconsistent with publication date without at least generating a warning.
 
-   - Create usable bibliographic *databases* for use with (La)TeX (and other reference managers).  The data model described above is way too expressive for what BiBTeX or BibLaTeX can handle, so Tkacz needs to be able to build =.bib= files on-demand with a given subset of its db.
+ - Create usable bibliographic *databases* for use with (La)TeX (and other reference managers).  The data model described above is way too expressive for what BiBTeX or BibLaTeX can handle, so Tkacz needs to be able to build =.bib= files on-demand with a given subset of its db.
 
-   - Rather than supporting “file attachments”, provide a general mechanism to describe *copies* of a reference, some of which can be files, but would also include things like: it's in this library at this call number; it's in my personal library, I have a printout in this box, /etc/.
+ - Rather than supporting “file attachments”, provide a general mechanism to describe *copies* of a reference, some of which can be files, but would also include things like: it's in this library at this call number; it's in my personal library, I have a printout in this box, /etc/.
 
-   - Make the *database history* easy to browse, review, and understand.  Nothing frightens me more than undocumented and non-versioned binary databases with quirky UIs that make it hard to get a grasp of what's going on (yes, [[https://www.readcube.com/papers/][Papers]], I'm looking at you).  The database will be in a Lisp-like syntax (think XML with parentheses), with Git integration out of the box.  A change = a commit, with a meaningful message.  This leaves the user free to rebase, reorder or squash commits before pushing, and should make it trivial to keep a perfectly clean history.
+ - Make the *database history* easy to browse, review, and understand.  Nothing frightens me more than undocumented and non-versioned binary databases with quirky UIs that make it hard to get a grasp of what's going on (yes, [[https://www.readcube.com/papers/][Papers]], I'm looking at you).  The database will be in a Lisp-like syntax (think XML with parentheses), with Git integration out of the box.  A change = a commit, with a meaningful message.  This leaves the user free to rebase, reorder or squash commits before pushing, and should make it trivial to keep a perfectly clean history.
 
 This is a *design document* for Tkacz, which should work as a specification for both the user interface and the implementation.
 
@@ -154,8 +154,6 @@ Just type =?= in the UI, and type some search terms.  This is actually just anot
 
 The ontology is the actual data model.  The next section describes the type system used to implement this model.
 
-** Entity types
-
 #+BEGIN_SRC sh :file images/EntityHierarchy.png :exports results
   racket ontology.rkt | dot -T png
 #+END_SRC
@@ -164,7 +162,6 @@ The ontology is the actual data model.  The next section describes the type syst
 [[file:images/EntityHierarchy.png]]
 
 * Internals
-** Type system
 
 Tkacz has strong implicit typing, but its type system comes with its own set of quirks.  The set of types contains the usual suspects (strings, integer, floats, booleans, lists, sets...) along with algebraic sums and products, called =either= and =struct=.  The primitive types are as boring as can be expected, but =either= and =struct= are more interesting.
 
@@ -206,7 +203,7 @@ Either is a rough equivalent of Haskell's =|=.  It defines a sum type which can 
   (either string number)
 #+END_SRC
 
-A field of this type can be, guess what, either a string or a number.  Unlike structs, either isn't enough to define a type, and can only be assigned as the type of a struct's field.  Ether's are resolved at struct constructor level, and don't appear in the object itself but are replaced by a value of the chosen type.  For example, if the above definition was the type of a field called =a=, the struct object would only contain:
+A field of this type can be, guess what, either a string or a number.  Unlike structs, either isn't enough to define a type, and can only be assigned as the type of a struct's field.  Either are resolved at struct constructor level, and don't appear in the object itself but are replaced by a value of the chosen type.  For example, if the above definition was the type of a field called =a=, the struct object would only contain:
 
 #+BEGIN_SRC lisp
   (tzo/struct struct-name :a (:type integer :value 1))
@@ -245,7 +242,6 @@ Entities are the essential Tkacz type.  They're defined from structs, but unlike
 Everything Tkacz is meant to keep information about is an entity.  The most important type of Entity is of course Reference, which stores a bibliographic reference.
 
 Informally, an entity is something with an actual existence.  A person is an entity, not a title or a publication year.  Yet, this criterion should be understood in a quite relaxed fashion, and not as a strict requirement:  it's nice to be able to group an article, its extended reprint as a book chapter, and its translation to another language has no existence /per se/ as instances of a single "thing" which lack any actual existence, but helps keep track of various transformations of this document.  Such a thing is an entity nonetheless, because it's useful to consider it as one.
-
 ** Taxonomies
 
 Taxonomies are trees.  Taxonomy objects are structs with the following attributes:

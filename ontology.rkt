@@ -22,7 +22,7 @@
                                                                                  (USSupremeCourt #t))
                                                                    (StateCourt #f))
                                                           (FrenchCourt #f
-                                                                       ("CourDeCassation" #t)
+                                                                       (CourDeCassation #t)
                                                                        (TribunalCorrectionnel #t)))
                                            (PublicRecord #f
                                                          (BirthCertificate #t)
@@ -31,7 +31,8 @@
                                                          )
                                            (Patent #f))
                                     (Report #f)
-                                    (Unpublished #f))
+                                    (Unpublished #f
+                                                 (Lecture #t)))
                           (Person #f
                                   (NaturalPerson #t)
                                   (LegalPerson #t)
