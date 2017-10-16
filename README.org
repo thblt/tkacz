@@ -163,7 +163,22 @@ The ontology is the actual data model.  The next section describes the type syst
 
 * Internals
 
-Tkacz has strong implicit typing, but its type system comes with its own set of quirks.  The set of types contains the usual suspects (strings, integer, floats, booleans, lists, sets...) along with algebraic sums and products, called =either= and =struct=.  The primitive types are as boring as can be expected, but =either= and =struct= are more interesting.
+** The type system
+
+
+Tkacz is strongly typed.
+
+ - Tkacz types are constructed by *composing* a small set of *primitive* types.
+ - Composition is done in the form of *classes*.  Classes have named properties and methods.
+ - There is an *either* type, similar to Haskell's =Either=.
+ - There is a *reference to entity* type.  A reference stores the identifier of an entity and its type, probably as a pair: =(NaturalPerson . MichelFoucault)=.  References are typed.
+ - *Methods* can be overridden at instance level.  This may be complicated, so could be implemented as fields with function types and a default value.
+ - Classes may be *abstract*.  Abstract classes may require *interfaces* to become concrete.
+ - Properties have a visibility setting which determines if they're exposed to the user or not.  This is different from OOP's concepts of private/public: non-exposed members are by default public.
+ - Classes and properties declaration include a *user-readable*, localizable name and optional documentation.  Eg: =(defclass BirthCertificate PublicRecord #name "Birth certificate" #document "A legal birth certificate, help by a Public Records office.")=.  This should automatically generate translation templates.
+ - For each Tkacz run, the type definitions are built once and for all during a bootstrapping phase.  After this phase, they become read-only.
+ - Type are *inspectable at runtime*: the GUI system needs typing data to build UIs.  Inspection doesn't have to be dynamic, since at this point types are read-only.  Names, documentation and types of properties, as well as hierarchy of types, have to be inspectable.
+ - Types are extensible after declaration, but before runtime.  That is, fields may be added, or their types changed.  Entity types may be created.
 
 *** Primitive types
 
@@ -171,29 +186,10 @@ Tkacz has strong implicit typing, but its type system comes with its own set of 
  - Integer
  - Float
  - Boolean
- - list
-
-*** Structs
-
-/Structs/ form the most essential of all Tkacz's types, and they're the underlying mechanism for entities.  Structs are a combination of named and typed /fields/, which can have a default value; optional validators.
-
-**** Types of struct fields
-
-Structs fields can be of three types:
-
- - A primitive type: =string=, =boolean=, =float=, etc.  List types are described as =(list TYPE)=, sets as =(set TYPE)=.
- - Another structure type: =natural-person-name=.
- - An entity type: =(entity Person)=
-
-**** Validation
-
-Assignment to fields can be validated.
-
-**** Inheritance and interfaces
-
- - Struct types can inherit from others
- - Struct types can be abstract (virtual)
- - Abstract struct types can require interfaces
+ - File
+ - List
+ - Picture
+ - Date
 
 *** Alternatives (=either=)
 
