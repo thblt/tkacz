@@ -12,6 +12,7 @@ This document describes yet another instantiation of my attempts to create a san
 - [[#user-interface][User interface]]
 - [[#standard-ontology][Standard ontology]]
 - [[#internals][Internals]]
+- [[#clientserver-protocol][Client/server protocol]]
 - [[#unresolved-issues][Unresolved issues]]
 - [[#potential-features-after-01][Potential features after 0.1]]
 - [[#footnotes][Footnotes]]
@@ -330,10 +331,11 @@ The file format should be readable by a human, and git history should be easy to
 
 Git is an integral part of Tkacz' storage subsystem, and is managed automatically.  Tkacz stages changes, commits them and can optionally push them to a remote repository.
 
-** Client/server protocol
+* Client/server protocol
 
 The Tkacz program is a simple server able to talk to various clients.  The CLI program itself isn't made to be used by humans, but only for programs to interact with it.  The initial implementation uses s-expressions for requests and responses, because a they're really easy) to parse; and b) both the server and original client are written in Lisp.
 
+** Sessions
 *** Starting a session
 
 To begin a session, the client sends:
@@ -348,12 +350,6 @@ Where =tkacz= is the magic handshake command, and =elisp= the dialect the client
   (tkacz :protocol (0 1 0))
 #+END_SRC
 
-or the less welcoming version:
-
-#+BEGIN_SRC lisp
-  (abort [msg])
-#+END_SRC
-
 The client must send a =db-load= or =db-create= as its first request, or the server will abort communication[fn:2].
 
 *** Requests and responses
@@ -364,7 +360,7 @@ Client writes to server's stdin to send requests of the form:
   (request ID BODY)
 #+END_SRC
 
-The client is responsible for giving each request a session-unique ID, as the server provides no guarantee on the order of responses.  Replies are written to stdout, wrapped in:
+The client is responsible for giving each request a session-unique ID as a positive integer, as the server provides no guarantee on the order of responses[fn:4].  Replies are written to stdout, wrapped in:
 
 #+BEGIN_SRC lisp
   (response ID BODY)
@@ -382,36 +378,87 @@ For debugging purposes, client/server sessions can include comments.  Lines matc
 
 In production, comments should be absolutely avoided.
 
+** Commands
+*** Database operations
+
+ - =(db-load PATH [READ-ONLY #f])= :: load the Tkacz database at =PATH=.
+
+ - =(db-create PATH)= :: Create and load a new Tkacz database at =PATH=.
+
+ - =(db-version)= :: returns a monotonously increasing integer describing the version of the database.  It is guaranteed that if =(db-version)= returns the same value, the database is unmodified.  No other guarantees are provided.  These values are session-specific, and aren't usable to compare database states across sessions.
+
+*** Contexts
+
+ - =(context [context #<void>])= :: activate =context=, if provided, or deactivate current context, if any.
+
+*** Querying
+
+ - =(query query format [format-options #<void>])= :: runs =query= and returns a list of results.  =format= is one of:
+
+   - ='identifiers=: return entity identifiers.
+   - ='description=: return formatted description of entities.
+   - ='properties=: return alists of entity properties (the "raw" entity).
+
+ - =(list (id ...+) format format-options)= :: similar to =(query)=, but takes a list of entity names instead of a query.
+
+*** Reading entities
+
+ - =(get id)= :: get contents of entity with identifier =id=.  This returns an entity object.
+ - =(type id)= :: return the type of entity =id=.
+ - =(is-a class id [strict #f])= :: true if =id= is an instance of =class=.  If strict is false, true also if =id= is an instance of a subclass of =class=.
+
+*** Creating and modifying entities
+
+**** Accessing entities for writing
+
+ - =(new type)= :: prepare a new entity of type =type=, and return an editing identifier.
+ - =(edit id)= :: begins editing an entity for editing, and return an editing identifier.
+
+**** Editing entities
+
+ - =(editor editing-id)= :: returns an editor description object for entity =id=.
+ - =(validate editing-id field value [store #t])= :: runs validators to determine if =value= is acceptable for =field= in the context of =editing-id=.  If =store=, store the value on the editing context if it passes validation.
+
+*** Reading the ontology
+
+ - =(classes)= :: return the tree of entity classes, starting at Entity.
+ - =(class-inheritance class [depth 0])= :: return the inheritance list of =class=.  The returned value is a list whose =car= is the immediate superclass of =class=.  If =depth>0=, list halts after =depth= elements.
+ - =(class-is-a a b)= :: return true if b is a the same class as, or a superclass of, b.
+ - =(types)= :: return the list of non-entity, non-primitive types.
+
+*** Working with collections
+
+ - =(collections)= :: list all available collections.
+ - =(collections-populate)= :: populate collections with entities.
+ - =(collection-create name [parent #<void>] [gender #f] [query #<void>])= :: create a new collection called =name=, below =parent=,
+
 * TODO Unresolved issues
 
-** TODO References without a known original publication date
+** For first beta
+
+*** TODO References without a known original publication date
 
 Eg. virtually every ancient work: (Plato, 2004) sounds weird, but we really don't know the exact date /The Sophist/ was written, and publication date is meaningless in the context.
 
-** TODO «Abstract» references and «virtual» works
+*** TODO «Abstract» references and «virtual» works
 
-*** Multipart works
+**** Multipart works
 
- - Some works don't actually exist: Hume's /Treatise of Human Nature/ is made of three different books, but some editions merges some, or all, of these books.
- - This is actually the general issue of multiple volume works.
- - We could create a =collection= or =multipart= type, which would represent an /abstract/ work as a collection of multiple parts.
+ - Some works don't actually exist: Hume's /Treatise of Human Nature/ is made of three different books, but some editions merges some, or all, of these books: Create an =Entity/Document/Multipart= type.
 
-*** Non-published works
+**** Non-published works
 
 Some works have not been originally published on papers:
 
- - Conferences and lectures (Austin's /How to do things with words/, Goodman's /Facts, Fictions, Predictions/, Bourdieu's lectures at the Collège de France...)
- - Ancient works (Plato, Aristotle...)
+ 1. Conferences and lectures (Austin's /How to do things with words/, Goodman's /Facts, Fictions, Predictions/, Bourdieu's lectures at the Collège de France...)
+ 2. Ancient works (Plato, Aristotle...)
 
-**** Conferences and lectures
+This requires a bit of subtlety in date assignment, but could be reasonably easily solved:
 
-This is actually an easy case, which could build on the basic relationship between editions.  Something like:
+ 1. By using the =Entity/Document/Unpublished/Lecture= type to create an original instance.
+ 2. By allowing fuzzy dates, or date intervals.  This is better left for version 2 :)
 
-#+BEGIN_SRC lisp
-  (conference Goodman:FactFictionForecast)
-#+END_SRC
-
-*** Works with multiple, different, editions
+**** Works with multiple, different, editions
 
 Eg /Critique of Pure Reason/
 
@@ -465,6 +512,8 @@ We could consider a system of /traits/ to further specify entities.  These trait
 
 
 * Footnotes
+
+[fn:4] Which doesn't imply in any way that the server promises to work asynchronously.  It would be unreasonable to write the first version as asynchronous, and it is likely that parallel computation, if ever implemented, will work on a stop-the-world-on-write mode.
 
 [fn:1] This is an oversimplification, but it's the BibTeX model.
 
