@@ -14,7 +14,6 @@ This document describes yet another instantiation of my attempts to create a san
 - [[#internals][Internals]]
 - [[#clientserver-protocol][Client/server protocol]]
 - [[#unresolved-issues][Unresolved issues]]
-- [[#potential-features-after-01][Potential features after 0.1]]
 - [[#footnotes][Footnotes]]
 
 * Introduction: doing two things and doing them well
@@ -471,15 +470,15 @@ To handle these cases, we may create a "virtual" entry, something like:
                     ("Critique of Pure Reason" :lang en))
 #+END_SRC
 
-** TODO La Fontaine's fables
+*** TODO La Fontaine's fables
 
 Louis Marin's /Portrait of the King/ contains a long commentary of Jean de la Fontaine's /The Crow and the Fox/.  If one wanted to take a quick note on that (/ie/, express that =Marin1981=, I, 2 is about the fable, should one look up the original publication year of the whole collection of fables, create records, etc, or could one just create a quick draft entry on "Fables" with a single, unnumbered chapter "The Fox and the Crown" to which Marin1981, I, 2 could point to as a topic?
 
-** TODO Sorting
+*** TODO Sorting
 
 The definition of an entity should include rules for sorting its instances, regardless of the way they're rendered: Jacques Lacan should appear /after/ Sigmund Freud.
 
-** TODO Text formatting syntax
+*** TODO Text formatting syntax
 
 Since entities describe how they should be displayed, we need a rudimentary text formatting syntax, something that should be trivial to convert to any other syntax, and which could look like:
 
@@ -496,17 +495,22 @@ Since entities describe how they should be displayed, we need a rudimentary text
    "Paris" 'colon "Les éditions de Minuit" 'colon "1970" 'fullstop)
 #+END_SRC
 
-* TODO Potential features after 0.1
+*** TODO Entities within entities
 
-** TODO Completion on queries
+There are two ways an entity may contain another: being contained may be essential for the entity, or anecdotal.  It is essential for a chapter to be part of a book, it is anecdotal for a person to be part of a collective.  Maybe entities could have a =standalone= property, or something similar, which could determine whether or not they should be displayed in the main listing.
+
+For instance,
+
+** TODO After first beta
+*** TODO Completion on queries
 
 The server could act provide completion and syntax checking services for queries and similar
 
-** TODO Ontology introspection from the query system
+*** TODO Ontology introspection from the query system
 
 Queries could be able to return informations about the ontology itself, and
 
-** TODO Traits on entity objects
+*** TODO Traits on entity objects
 
 We could consider a system of /traits/ to further specify entities.  These traits would apply to /objects/, not /classes/.  For instance, academic position (Eg "/someone/ was the Roger Rabbit Professor of Metaethics at Harvard from 1963 to 1985") may be useful as an attribute of a physical person; yet it isn't meaningful for every single person.  We could then define /traits/ as optional attributes of a given entity type.  In this case, the trait "academic position" would allow to assign a series of academic positions to a given person.
 
