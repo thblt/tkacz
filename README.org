@@ -18,12 +18,14 @@ This document describes yet another instantiation of my attempts to create a san
 
 * Introduction: doing two things and doing them well
 
-Why yet another reference manager?  The first goal of Tkacz is to be usable for very large bibliographies in the field of historical sciences, with a strong focus on contemporary history of science, although it shouldn't be restricted to a specific field or research domain.  Large bibliographies need good organization capabilities, history requires a powerful enough data model to cleanly represent complex or unusual documents and relationships between documents, and all research require open, documented and easily usable formats that doesn't tie their users to a particular piece software.  Tkacz tries to satisfies these needs by addressing both the shortcomings of existing document managers and reference managers:
+Why yet another reference manager?  The first goal of Tkacz is to be usable for very large bibliographies in the field of historical sciences, with a strong focus on contemporary history of science, although it shouldn't be restricted to a specific field or research domain.  Large bibliographies need good organization capabilities, history requires a powerful enough data model to cleanly represent complex or unusual documents and relationships between them, and all research require open, documented and easily usable formats that doesn't tie their users to a particular piece of software.
+
+Tkacz tries to satisfies these needs by addressing the shortcomings of existing document managers /and/ reference managers:
 
 *Document managers*
 usually have very powerful classification, ordering and annotation features, but a very poor data model, which makes it hard to actually meaningfully and formally /describe/ documents by providing formal bibliographic references.
 
-Most document management software also assume documents are somehow unique and /sui generis/, where historical sources tend to have significant histories: they may be reprinted, republished, collected and updated, and all of this matters, both for the history of the document and its availability: knowing where to find an obscure article is important.   In the “hard” sciences, the most complicated (significant) thing that can happen to an article is to be withdrawn, and all you're expected to do in this case is not to cite it anymore; but for historical research, withdrawals or reprints are actually significant.
+Most document management software also assume documents are somehow unique and /sui generis/, where historical sources tend to have significant histories in themselves: they may be reprinted, republished, collected and updated, and all of this matters, both for the history of the document and its availability: knowing where to find an obscure article is important.   In the “hard” sciences, the most complicated (significant) thing that can happen to an article is to be withdrawn, and all you're expected to do in this case is not to cite it anymore; but for historical research, withdrawals, reprints, modifications, reuse, etc., are often significant and need to be represented.
 
 It is also assumed that documents are files, usually PDFs.  But it's often the case that documentation is scattered between different libraries, printed and electronic copies, that not everything has a PDF and not every PDF is complete.
 
@@ -31,6 +33,7 @@ It is also assumed that documents are files, usually PDFs.  But it's often the c
 make it easy to reference documents you don't actually own (and often make it the default), and usually have a powerful (or extensible) enough data model to accommodate a lot of information, but they usually fall very short when it comes to classification.  Beyond that, the (potential) power of the data model is not necessarily reflected in all UIs, and some changes that are theoretically possible in the data model will make the data actually unusable.  For instance, handing authors not as strings, but as /objects/ is /theoretically/ feasible in the BibTeX format; but such files would be unusable by the Bib(La)TeX family of programs.
 
 #+LATEX: \paragraph{}
+
 The goal of Tkacz is to “do /two/ things, and do them well”: to serve as a document manager with the full power of a bibliographical data manager.  That means:
 
  - Nicely deal with *complex or unusual entities*: manuscripts, unpublished works, posthumous publications, etc.  This means a more complex data model that most reference managers provide, and if possible an /extensible/ data model.
@@ -43,21 +46,21 @@ The goal of Tkacz is to “do /two/ things, and do them well”: to serve as a d
 
  - Express *relationships* between entities: an article and a reprint, or a withdrawal, a book and its editions, a multipart work and its parts, etc.
 
- - Help represent the *history* of references: an article may have been published in a journal, then reprinted multiple times in different books.  Where do I look for Canguilhem's 1966 article “Mort de l'homme ou épuisement du cogito?”, if I can't get the original journal?  Has it been translated into English, if I need to cite it in an English article, and where to find the translation?
+ - Help represent the *history* of references: an article may have been published in a journal, then reprinted multiple times in different books.  Where do I look for Canguilhem's 1966 article “Mort de l'homme ou épuisement du cogito?”, if I don't have access to the original journal?  Has it been translated into English, if I need to cite it in an English article, and where to find the translation?
 
- - Make it hard to introduce inconsistencies or typos in the database.  Journals, like persons, are objects: if the object describes the publishing rate, then no reference could contain a volume/issue number inconsistent with publication date without at least generating a warning.
+ - Make it hard to introduce *inconsistencies* or typos in the database.  Journals, like persons, are objects: if the object describes the publishing rate, then no reference could contain a volume/issue number inconsistent with publication date without at least generating a warning.
 
- - Create usable bibliographic *databases* for use with (La)TeX (and other reference managers).  The data model described above is way too expressive for what BiBTeX or BibLaTeX can handle, so Tkacz needs to be able to build =.bib= files on-demand with a given subset of its db.
+ - Create usable bibliographic *databases* for use with (La)TeX (and other reference managers).  The data model outlined above is way too expressive for what BiBTeX, BibLaTeX or virtually any bibliography manager can handle, so Tkacz needs to be able to build =.bib= files on-demand with a given subset of its database.
 
  - Rather than supporting “file attachments”, provide a general mechanism to describe *copies* of a reference, some of which can be files, but would also include things like: it's in this library at this call number; it's in my personal library, I have a printout in this box, /etc/.
 
- - Make the *database history* easy to browse, review, and understand.  Nothing frightens me more than undocumented and non-versioned binary databases with quirky UIs that make it hard to get a grasp of what's going on (yes, [[https://www.readcube.com/papers/][Papers]], I'm looking at you).  The database will be in a Lisp-like syntax (think XML with parentheses), with Git integration out of the box.  A change = a commit, with a meaningful message.  This leaves the user free to rebase, reorder or squash commits before pushing, and should make it trivial to keep a perfectly clean history.
+ - Make the *database history* easy to browse, review, and understand.  Nothing frightens me more than undocumented and non-versioned binary databases with quirky UIs that make it hard to get a grasp of what's going on (yes, [[https://www.readcube.com/papers/][Papers]], I'm looking at you).  The database will be in a Lisp-like syntax (think XML with parentheses), with Git integration out of the box.  A change = a commit, with a meaningful commit message.  This leaves the user free to rebase, reorder or squash commits before pushing, and should make it trivial to keep a perfectly clean history.
 
 This is a *design document* for Tkacz, which should work as a specification for both the user interface and the implementation.
 
 * User interface
 
-when started with =M-x tkacz RET=, Tkacz shows a list of all references it has in store.  It can also show a list of any other type of entities: to do so, press e, then select the entity type you want.  There are three by default: references (=r=), persons (=p=), and journals (=j=).
+When started with =M-x tkacz RET=, Tkacz shows a list of all references it has in store.  It can also show a list of any other type of entities: to do so, press e, then select the entity type you want.  There are three by default: references (=r=), persons (=p=), and journals (=j=).
 
 By default, entities are displayed in so-called natural format, they can also be shown in tabulated format by pressing ===.
 
@@ -68,9 +71,9 @@ By default, entities are displayed in so-called natural format, they can also be
 There are multiple ways to create new references:
 
  - Press =n n= in the references view to display an input form where you can manually fill fields.  This is the most tedious way, and should generally be avoided.
- - =n u= will prompt for a URL, then do its best to build a reference out of it.  If possible, it will assimilate the associated PDF as a copy of the reference.  =n U= does the same in a loop, which is useful if you're browsing the web in search for documentation (terminate with =C-g=).  To create references from a web browser, simply configure it to call =(tkacz/create-reference-from-url)= or (=tkacz/create-reference-from-html)= on the Emacs daemon.
+ - =n u= will prompt for a URL, then do its best to build a reference out of it.  If possible, it will assimilate the associated PDF as a copy of the reference.  =n U= does the same in a loop, which is useful if you're browsing the web in search for documentation (terminate with empty input).  To create references from a web browser, simply configure it to call =tkacz/create-reference-from-url= or =tkacz/create-reference-from-html= on the Emacs daemon.
  - Similarly, =n f= will prompt for a file, =n F= will do so in a loop.
- - =n d= will show a drop area on which you can drag and drop virtually everything, although with a strong preference for URLs and PDFs.
+ - =n d= will show a drop area on which you can drag and drop virtually everything, with a strong preference for URLs and PDFs.
 
 *** Viewing and editing references
 
@@ -86,7 +89,7 @@ Taxonomies are hierarchical trees whose branches and leaves may contain entities
 
 *** TODO Contexts
 
-Contexts are branches and leaves of a taxonomy.  Contexts are how Tkacz help manage huge collections of possibly unrelated entities.  If you're working on, eg, your PhD in history of psychiatry, you don't want all your computer science articles collection popping up in the list.  Contexts are taxonomies, but the contract with the UI is different:
+Contexts are branches and leaves of a taxonomy.  Contexts are how Tkacz help manage huge collections of possibly unrelated entities.  If you're working on, say, your PhD in history of psychiatry, you don't want all your computer science articles collection popping up in the list.  Contexts are taxonomies, but the contract with the UI is different:
 
  - Contexts are used as first-order filters.  In the default UI, =C= is used to toggle between contexts.
  - When toggling back to a previous context, secondary filters are to be restored as they were.
@@ -122,7 +125,7 @@ Need the complete works of someone, including books they edited?
 
 Notice the =car= of each s-expression is the field, the whole =cdr= is values.
 
-Standard boolean operators are available, of course.  =and= is always implied.
+Standard boolean operators are available, of course.
 
 #+BEGIN_SRC lisp
   (not (and (author RobertStoller) (author RobertGreen)))
@@ -165,19 +168,37 @@ The ontology is the actual data model.  The next section describes the type syst
 
 ** The type system
 
-
 Tkacz is strongly typed.
 
  - Tkacz types are constructed by *composing* a small set of *primitive* types.
+
  - Composition is done in the form of *classes*.  Classes have named properties and methods.
- - There is an *either* type, similar to Haskell's =Either=.
- - There is a *reference to entity* type.  A reference stores the identifier of an entity and its type, probably as a pair: =(NaturalPerson . MichelFoucault)=.  References are typed.
+
+ - There is an *either* type.
+
+ - There are *references*.  A reference stores the identifier of another entity.  References are typed.
+
  - *Methods* can be overridden at instance level.  This may be complicated, so could be implemented as fields with function types and a default value.
+
  - Classes may be *abstract*.  Abstract classes may require *interfaces* to become concrete.
+
  - Properties have a visibility setting which determines if they're exposed to the user or not.  This is different from OOP's concepts of private/public: non-exposed members are by default public.
- - Classes and properties declaration include a *user-readable*, localizable name and optional documentation.  Eg: =(defclass BirthCertificate PublicRecord #name "Birth certificate" #document "A legal birth certificate, help by a Public Records office.")=.  This should automatically generate translation templates.
+
+ - Classes and properties declaration include a *user-readable*, localizable name and optional documentation.  Eg:
+
+   #+BEGIN_SRC lisp
+     (defclass BirthCertificate PublicRecord
+       "Birth certificate \n
+     \n
+     A legal birth certificate, held by a Public Records office.")
+   #+END_SRC
+
+   This should automatically generate translation templates.
+
  - For each Tkacz run, the type definitions are built once and for all during a bootstrapping phase.  After this phase, they become read-only.
- - Type are *inspectable at runtime*: the GUI system needs typing data to build UIs.  Inspection doesn't have to be dynamic, since at this point types are read-only.  Names, documentation and types of properties, as well as hierarchy of types, have to be inspectable.
+
+ - Types are *inspectable at runtime*: the GUI system needs typing data to build UIs.  Inspection doesn't have to be dynamic, since at this point types are read-only.  Names, documentation and types of properties, as well as hierarchy of types, have to be inspectable.
+
  - Types are extensible after declaration, but before runtime.  That is, fields may be added, or their types changed.  Entity types may be created.
 
 *** Primitive types
@@ -191,7 +212,7 @@ Tkacz is strongly typed.
  - Picture
  - Date
 
-*** Alternatives (=either=)
+**** Alternatives (=either=)
 
 Either is a rough equivalent of Haskell's =|=.  It defines a sum type which can be of any of a finite set of type.  A simple example of =either= is:
 
@@ -202,7 +223,7 @@ Either is a rough equivalent of Haskell's =|=.  It defines a sum type which can 
 A field of this type can be, guess what, either a string or a number.  Unlike structs, either isn't enough to define a type, and can only be assigned as the type of a struct's field.  Either are resolved at struct constructor level, and don't appear in the object itself but are replaced by a value of the chosen type.  For example, if the above definition was the type of a field called =a=, the struct object would only contain:
 
 #+BEGIN_SRC lisp
-  (tzo/struct struct-name :a (:type integer :value 1))
+  (tzo/struct struct-name #:a (#:type integer #:value 1))
 #+END_SRC
 
 **** TODO Use-case for =either= is missing
@@ -235,9 +256,8 @@ Entities are the essential Tkacz type.  They're defined from structs, but unlike
   (tkacz/entity Person person)
 #+END_SRC
 
-Everything Tkacz is meant to keep information about is an entity.  The most important type of Entity is of course Reference, which stores a bibliographic reference.
+Everything Tkacz is meant to keep information about is an entity.  Informally, an entity is something with an actual existence (in a very loose sense of the word).  A person is an entity, a publication's title or date aren't.  Yet, this criterion should be understood in a quite relaxed fashion, and not as a strict requirement:  it's nice to be able to group an article, its extended reprint as a book chapter, and its translation to another language as instances of a single "thing" (the "abstract" article) to help keep track of various transformations of this document.  Such a thing is an entity nonetheless, because it's useful to consider it as one.
 
-Informally, an entity is something with an actual existence.  A person is an entity, not a title or a publication year.  Yet, this criterion should be understood in a quite relaxed fashion, and not as a strict requirement:  it's nice to be able to group an article, its extended reprint as a book chapter, and its translation to another language has no existence /per se/ as instances of a single "thing" which lack any actual existence, but helps keep track of various transformations of this document.  Such a thing is an entity nonetheless, because it's useful to consider it as one.
 ** Taxonomies
 
 Taxonomies are trees.  Taxonomy objects are structs with the following attributes:
@@ -249,9 +269,8 @@ Taxonomies are trees.  Taxonomy objects are structs with the following attribute
 | =gender=    | true     | whether this branch is a gender      |
 | =showempty= | false    | Whether to show this branch if empty |
 
-
-- =parent= is void at the root branch of a tree.
-- A =gender= is a branch which contains the leaves of its children (the way, in biology, a gender is made of its species)
+- =parent= is null at the root branch of a tree.
+- A =gender= is a branch which contains the leaves of its children (the way, in biology, a gender is "made of" its species)
 - =showempty= hides a branch and all its subtrees if they contain no entities, and only in this case.
 
 There are two kind of branches: standard and queries.  Query branches can do two things: they can treat their result as a list of entities, or as a list of branches which each receive a result and use it on a second, standard query.
@@ -274,19 +293,19 @@ Also, query branches:
 
 Could we have a query branch listing persons, then subbranches listing their work =((author (parent-result)))=, /then subsubbranches distributing works by their types/?  We could call them "breakdown branches".
 
-This could be made by allowing queries to act on the ontology and not only entities.
+This could be done by allowing queries to act on the ontology and not only entities.
 
 **** TODO Note to self
 
-Sub-query branches shouldn't need to access more than a result of their parent branch?
+Sub-query branches shouldn't need to access more than a single result of their parent branch.
 
-** Relationships
+** TODO Relationships
 
 Relationships connect entities together
 
 ** Query language
 
-Formal queries are actually small programs.  They operate within a context and reduce progressively reduce that context.  Eg, this query:
+Formal queries are actually small programs.  They operate within a context and progressively reduce that context.  Eg, this query:
 
 #+BEGIN_SRC lisp
   (intersection
@@ -324,7 +343,7 @@ Git is an integral part of Tkacz' storage subsystem, and is managed automaticall
 
 * Client/server protocol
 
-The Tkacz program is a simple server able to talk to various clients.  The CLI program itself isn't made to be used by humans, but only for programs to interact with it.  The initial implementation uses s-expressions for requests and responses, because a they're really easy) to parse; and b) both the server and original client are written in Lisp.
+The Tkacz program is a simple server able to talk to various clients.  The CLI program itself isn't made to be used by humans, but only for programs to interact with it.  The initial implementation uses s-expressions for requests and responses, becaus)e a they're really easy to parse; and b) both the server and original client are written in Lisp.
 
 ** Sessions
 *** Starting a session
@@ -341,7 +360,7 @@ Where =tkacz= is the magic handshake command, and =elisp= the dialect the client
   (tkacz :protocol (0 1 0))
 #+END_SRC
 
-The client must send a =db-load= or =db-create= as its first request, or the server will abort communication[fn:2].
+The client must send a =db-load= or =db-create= as its first request, or the server will abort communication[fn:1].
 
 *** Requests and responses
 
@@ -351,7 +370,7 @@ Client writes to server's stdin to send requests of the form:
   (request ID BODY)
 #+END_SRC
 
-The client is responsible for giving each request a session-unique ID as a positive integer, as the server provides no guarantee on the order of responses[fn:4].  Replies are written to stdout, wrapped in:
+The client is responsible for giving each request a session-unique ID as a positive integer, as the server provides no guarantee on the order of responses[fn:2].  Replies are written to stdout, wrapped in:
 
 #+BEGIN_SRC lisp
   (response ID BODY)
@@ -376,7 +395,7 @@ In production, comments should be absolutely avoided.
 
  - =(db-create PATH)= :: Create and load a new Tkacz database at =PATH=.
 
- - =(db-version)= :: returns a monotonously increasing integer describing the version of the database.  It is guaranteed that if =(db-version)= returns the same value, the database is unmodified.  No other guarantees are provided.  These values are session-specific, and aren't usable to compare database states across sessions.
+ - =(db-version)= :: returns a monotonously increasing integer describing the version of the database.  It is guaranteed that if =(db-version)= returns the same value, the database is unmodified.  These values are session-specific, and aren't usable to compare database states across sessions.
 
 *** Contexts
 
@@ -391,6 +410,15 @@ In production, comments should be absolutely avoided.
    - ='properties=: return alists of entity properties (the "raw" entity).
 
  - =(list (id ...+) format format-options)= :: similar to =(query)=, but takes a list of entity names instead of a query.
+
+**** TODO Returning two sets
+
+This should return two sets of results:
+
+ 1. The set of entities matching =query=.
+ 2. When ~(= format 'properties)~, the set of entities referenced from the first set.  In other cases, the empty set.
+
+In we apply this, we can drop the list =(list)= option.
 
 *** Reading entities
 
@@ -407,8 +435,12 @@ In production, comments should be absolutely avoided.
 
 **** Editing entities
 
- - =(editor editing-id)= :: returns an editor description object for entity =id=.
- - =(validate editing-id field value [store #t])= :: runs validators to determine if =value= is acceptable for =field= in the context of =editing-id=.  If =store=, store the value on the editing context if it passes validation.
+ - =(editor editing-id)= :: return an editor description object for entity =id=.
+ - =(validate editing-id field value [store #t])= :: run validators to determine if =value= is acceptable for =field= in the context of =editing-id=.  If =store=, store the value on the editing context if it passes validation.
+
+***** TODO (validate) is half-pure
+
+We probably need to clearly differentiate effectful queries.  =(validate)= should be always pure, we should have a different  =(update)= function of same signature.
 
 *** Reading the ontology
 
@@ -472,47 +504,44 @@ The definition of an entity should include rules for sorting its instances, rega
 
 *** TODO Text formatting syntax
 
-Since entities describe how they should be displayed, we need a rudimentary text formatting syntax, something that should be trivial to convert to any other syntax, and which could look like:
+Since entity types describe how they should be displayed, we need a rudimentary text formatting syntax, something that should be trivial to convert to any other syntax, and which could look like:
 
-#+BEGIN_SRC racket
+#+BEGIN_SRC lisp
   (tkacz/format-text
-   (sc "Bourdieu") 'comma "Pierre"
-   'space "et" 'space
-   "Jean-Claude" 'space (sc "Passeron")
-   'comma
+   (sc "Bourdieu") comma "Pierre"
+   space "et" space
+   "Jean-Claude" space (sc "Passeron")
+   comma
    (italic "La reproduction"
-           'dot
+           dot
            "Éléments pour une théorie du système d'enseignement"
-           'dot)
-   "Paris" 'colon "Les éditions de Minuit" 'colon "1970" 'fullstop)
+           dot)
+   "Paris" colon "Les éditions de Minuit" colon "1970" fullstop)
 #+END_SRC
 
 *** TODO Entities within entities
 
 There are two ways an entity may contain another: being contained may be essential for the entity, or anecdotal.  It is essential for a chapter to be part of a book, it is anecdotal for a person to be part of a collective.  Maybe entities could have a =standalone= property, or something similar, which could determine whether or not they should be displayed in the main listing.
 
-For instance,
-
 ** TODO After first beta
 *** TODO Completion on queries
 
-The server could act provide completion and syntax checking services for queries and similar
+The server could provide completion and syntax checking services for queries and similar
 
 *** TODO Ontology introspection from the query system
 
-Queries could be able to return informations about the ontology itself, and
+Queries could be able to return information about the ontology itself, and
 
 *** TODO Traits on entity objects
 
-We could consider a system of /traits/ to further specify entities.  These traits would apply to /objects/, not /classes/.  For instance, academic position (Eg "/someone/ was the Roger Rabbit Professor of Metaethics at Harvard from 1963 to 1985") may be useful as an attribute of a physical person; yet it isn't meaningful for every single person.  We could then define /traits/ as optional attributes of a given entity type.  In this case, the trait "academic position" would allow to assign a series of academic positions to a given person.
-
+We could consider a system of /traits/ to further specify entities.  These traits would apply to /objects/, not /classes/.  For instance, academic position (Eg "/someone/ was the Roger Rabbit Professor of Metaethics at Harvard from 1963 to 1985") may be useful as an attribute of a physical person; yet it isn't meaningful for every single person.  But =Academic= cannot be a subtype of =NaturalPerson=, since most such subtypes wouldn't be mutually exclusive.  We could define /traits/ as optional attributes of a given entity type.  In this case, the =academic= trait would allow to assign a series of academic positions to a given person.
 
 * Footnotes
 
-[fn:4] Which doesn't imply in any way that the server promises to work asynchronously.  It would be unreasonable to write the first version as asynchronous, and it is likely that parallel computation, if ever implemented, will work on a stop-the-world-on-write mode.
+[fn:1] Tkacz works on one, and only one, database at a time.  This is not a limitation, but a design choice: instead of multiple databases, we have contexts.
 
-[fn:1] This is an oversimplification, but it's the BibTeX model.
-
-[fn:2] Tkacz works on one, and only one, database at a time.  By design, it's pointless to have more than one.
+[fn:2] Which doesn't imply in any way that the server promises to work asynchronously.  It would be unreasonable to write the first version as asynchronous, and it is likely that parallel computation, if ever implemented, will work on a stop-the-world-on-write mode.
 
 [fn:3] It is hard to avoid that the format /be/ in a specific Lisp dialect.  But this dialect should not command the implementation language of the backend.  This has some obvious consequences on extensibility.
+
+[fn:4] This is an oversimplification, but it's the BibTeX model.
