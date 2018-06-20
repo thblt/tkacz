@@ -1,0 +1,42 @@
+name:                Tkacz
+version:             0.1.0.0
+github:              "thblt/tkacz"
+license:             GPL-3
+author:              "Thibault Polge"
+maintainer:          "thibault@thb.lt"
+copyright:           "2018 Thibault Polge"
+
+extra-source-files:
+- README.md
+
+description:         The strange reference manager
+
+dependencies:
+- base >= 4.7 && < 5
+
+library:
+  source-dirs: src
+
+executables:
+  tkacz:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - Tkacz
+    - data-default
+    - optparse-applicative
+
+tests:
+  tkacz-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - Tkacz
