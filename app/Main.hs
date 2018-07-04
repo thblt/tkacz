@@ -6,7 +6,8 @@ import Data.Monoid
 import Options.Applicative
 
 import Data.Version (showVersion)
-import Paths_Tkacz (version)
+
+import qualified Tkacz
 
 addOptions = many (flag' () (short 'v'))
 
@@ -21,22 +22,21 @@ data Invocation =
   what :: Command
   }
 
-data Command =
-  ObjectShow
-  | ObjectSearch
-  | ObjectEdit
-  | ObjectNew
-  | ObjectMerge
-  | ObjectSplit
+data Command = ObjectShow
+             | ObjectSearch
+             | ObjectEdit
+             | ObjectNew
+             | ObjectMerge
+             | ObjectSplit
 
-  | CatList
-  | CatNew
+             | CatList
+             | CatNew
 
-  | ModelList
-  | ModelDescribe
+             | ModelList
+             | ModelDescribe
 
-  | Shell
-  | Version
+             | Shell
+             | Version
   deriving (Eq, Read, Show)
 
 ontologyOptions :: Parser Command
@@ -49,7 +49,7 @@ parser = Invocation
   <$>
   option auto ( short 'C'
                 <> help "Use the database at PATH"
-                <> value "~/Documents/tkacz"
+                <> value "~/Documents/Tkacz"
                 <> metavar "PATH")
                 -- <> showDefault)
   <*>
@@ -75,7 +75,6 @@ parser = Invocation
       <> commandGroup "Object manipulation commands:"
   )
   <|>
-
   hsubparser
   (command "categories" (info ontologyOptions ( progDesc "List known categories" ))
     <> command "group" (info ontologyOptions ( progDesc "Group things into a category" ))
@@ -106,12 +105,11 @@ parser = Invocation
   hsubparser
   (command "shell" (info ontologyOptions ( progDesc "Run the Tkacz shell" ))
     <> command "version" (info ontologyOptions ( progDesc "Print version number and exit" ))
-
     <> commandGroup "Other commands:"
     <> hidden))
 
 cmdVersion :: Invocation -> IO ()
-cmdVersion _ = putStrLn $ "Tkacz version " ++ (showVersion version)
+cmdVersion _ = putStrLn $ "Tkacz version " ++ (showVersion Tkacz.version)
 
 route :: Invocation -> IO ()
 route i = let go' Version = cmdVersion
@@ -120,5 +118,5 @@ route i = let go' Version = cmdVersion
             go' (what i) i
 
 main = do
-  opts <- execParser (info (parser <**> helper) (progDesc "The strange reference manager."))
+  opts <- execParser (info (parser <**> helper) (progDesc Tkacz.description))
   route opts

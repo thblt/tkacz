@@ -13,6 +13,10 @@ description:         The strange reference manager
 
 dependencies:
 - base >= 4.7 && < 5
+- containers
+- data-default
+- filepath
+- hashmap
 
 library:
   source-dirs: src
@@ -26,9 +30,8 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - Tkacz
-    - data-default
     - optparse-applicative
+    - Tkacz
 
 tests:
   tkacz-test:
