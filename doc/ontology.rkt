@@ -2,45 +2,46 @@
 
 (require racket/trace)
 
-(define ontology '(Entity #f
-                          #:requires identifier-factory
-                          #:requires name-factory
-                          (Document #f
-                                    (Article #f
-                                             #:field (title . simple-title)
-                                             (JournalArticle #t #:alpha 1)
-                                             (NewspaperArticle #t #:alpha 1)
-                                             (MagazineArticle #t #:alpha 1)
-                                             )
-                                    (Book #t)
-                                    (Chapter #t)
-                                    (Collection #f)
-                                    (Legal #f
-                                           (CourtDecision #f
-                                                          (USCourt #f
-                                                                   (FederalCourt #f
-                                                                                 (USSupremeCourt #t))
-                                                                   (StateCourt #f))
-                                                          (FrenchCourt #f
-                                                                       (CourDeCassation #t)
-                                                                       (TribunalCorrectionnel #t)))
-                                           (PublicRecord #f
-                                                         (BirthCertificate #t)
-                                                         (DeathCertificate #t)
-                                                         (MarriageCertificate #t)
-                                                         )
-                                           (Patent #f))
-                                    (Report #f)
-                                    (Unpublished #f
-                                                 (Lecture #t)))
-                          (Person #f
-                                  (NaturalPerson #t)
-                                  (LegalPerson #t)
-                                  )
-                          (Journal #f
-                                   (ScientificJournal #t)
-                                   (Magazine #t)
-                                   (Newspaper #t))))
+(define ontology '
+  (Entity #f
+          #:requires identifier-factory
+          #:requires name-factory
+          (Document #f
+                    (Article #f
+                             #:field (title . simple-title)
+                             (JournalArticle #t #:alpha 1)
+                             (NewspaperArticle #t #:alpha 1)
+                             (MagazineArticle #t #:alpha 1)
+                             )
+                    (Book #t)
+                    (Chapter #t)
+                    (Collection #f)
+                    (Legal #f
+                           (CourtDecision #f
+                                          (USCourt #f
+                                                   (FederalCourt #f
+                                                                 (USSupremeCourt #t))
+                                                   (StateCourt #f))
+                                          (FrenchCourt #f
+                                                       (CourDeCassation #t)
+                                                       (TribunalCorrectionnel #t)))
+                           (PublicRecord #f
+                                         (BirthCertificate #t)
+                                         (DeathCertificate #t)
+                                         (MarriageCertificate #t)
+                                         )
+                           (Patent #f))
+                    (Report #f)
+                    (Unpublished #f
+                                 (Lecture #t)))
+          (Person #f
+                  (NaturalPerson #t)
+                  (LegalPerson #t)
+                  )
+          (Journal #f
+                   (ScientificJournal #t)
+                   (Magazine #t)
+                   (Newspaper #t))))
 
 (define (collect-arguments remaining [collected '()])
   (if (and (not (empty? remaining)) (keyword? (car remaining)))

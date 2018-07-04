@@ -1,0 +1,130 @@
+#+TITLE: Tkacz: Implementation
+
+* Contents :TOC_1:noexport:
+- [[#introduction][Introduction]]
+- [[#data-model][Data model]]
+- [[#a-simplified-version-of-the-problem][A simplified version of the problem]]
+- [[#search][Search]]
+
+* Introduction
+
+This document complements the [[design.org][Tkacz design document]], but focuses on
+implementation details rather than on the general behavior of the
+program.
+
+* Data model
+
+* A simplified version of the problem
+
+We work with the following "class hierarchy":
+
+ - =Entity=
+   - =Document=
+     - =Article=
+     - =Book=
+   - =Person=
+     - =NaturalPerson=
+     - =LegalPerson=
+
+Which is an oversimplification of the data model, but should be enough
+to expose all the problems it causes.
+
+** Problem set
+
+*** Problem 1: what is it like to be a reprint of a reprint?
+
+ - NAGEL, Thomas (1983) «Quel effet cela fait, d'être une chauve souris?»,
+   /in Questions mortelles/, translated from English by P. Engel, Paris:
+   PUF, pp. 391--405.
+
+which is a translation of:
+
+- NAGEL, Thomas (1979) "What is it Like to be a Bat?", /in Mortal Questions/
+  Cambridge: Cambridge University Press.
+
+which is a reprint of:
+
+ - NAGEL, Thomas (1974): "What is it Like to be a Bat?", /The Philosophical Review/, 83 (4).
+
+*** Problem 2: changing names
+
+- BRUCE, Virginia (1967) "The Expression of Femininity in the Male", /J
+  Sex Res/ 3 (2)
+- PRINCE, Virginia (1973) "Sex vs Gender", in LAUB and GANDY (1973)
+
+Both these articles are written by the same person
+
+(LAUB and GANDY (1973) = /Proceedings of the Second Interdisciplinary
+Symposium on Gender Dysphoria Syndrome/, Stanford, California: Stanford
+University Medical Center.)
+
+*** Problem 3: variants and scientific editions
+
+ 1. KANT, Immanuel, 1781, Critique of Pure Reason 1st ed.
+ 2. KANT, Immanuel, 1787, Critique of Pure Reason 2nd ed.
+ 3. KANT, Immanuel (author); Renaut, Alain (scientific editor,
+    translator, notes, foreword): Critique de la raison pure.
+
+(1) and (2) are the two versions of the text by Kant.  3. merges them
+both in a single book with notes, foreword, etc.
+
+*** Problem 4: Multipart works
+
+ - Some works don't actually exist: Hume's /Treatise of Human Nature/ is
+   made of three different books, but some editions merges some, or
+   all, of these books: Create an =Entity/Document/Multipart= type.
+
+*** Problem 5: Non-published works
+
+Some works have not been originally published on papers:
+
+ 1. Conferences and lectures (Austin's /How to do things with words/,
+    Goodman's /Facts, Fictions, Predictions/, Bourdieu's lectures at the
+    Collège de France...)
+ 2. Ancient works (Plato, Aristotle...)
+
+This requires a bit of subtlety in date assignment, but could be
+reasonably easily solved:
+
+ 1. By using the =Entity/Document/Unpublished/Lecture= type to create an
+    original instance.
+ 2. By allowing fuzzy dates, or date intervals.  This is better left
+    for version 2 :)
+
+*** Problem 6: consequences of relationships
+
+If we attribute a =Book= to a =Person= with the =Author= relationship, it means that this person wrote that book, which is trivial because it's a defining relationship in the Book type, but it must also become a property of the person --- /ie/, the relationship has to have a corollary, but this corollary shouldn't (I think) have to be defined at the person's level.
+
+There are multiple solutions for this:
+
+ - we extend the type of Person with a "reverse relationship" =IsAuthorOf=.  This is not settable by the user, but is set when the forward relationship (=Author=) is attributed.
+
+** Solution 1: Haskell ADTs + some lenses
+
+*** Problem 1: resolving relationships
+
+We may have an =authors= field with references to objects of different types, eg =NaturalPerson= and =LegalPerson=.  So the =readObject= function cannot have a clearly defined type, unless we create a massive disjunctive type like:
+
+#+begin_src haskell
+  data Something = SomeEntity Entity
+                | SomeDocument Document
+                | SomeArticle Article
+                | SomeBook Book
+                -- etc
+#+end_src
+
+and predicate functions of the form:
+
+#+begin_src haskell
+  isDocument :: Something -> Bool
+  isDocument (SomeDocument _) = True
+  isDocument (SomeBook _)     = True
+  isDocument (SomeArticle _)  = True
+  isDocument _ = False
+#+end_src
+
+This implies a horrible amount of boilerplate, but is not impossible
+
+*** * Data storage
+
+* Search

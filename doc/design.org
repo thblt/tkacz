@@ -1,4 +1,4 @@
-#+TITLE: Tkacz
+#+TITLE: Tkacz: Design
 #+SUBTITLE: The advanced, extensible and non-existing reference manager.
 #+OPTIONS: toc:2
 
@@ -15,7 +15,7 @@ interested in providing suggestions or feedback.
 - [[#introduction-doing-two-things-and-doing-them-well][Introduction: doing two things and doing them well]]
 - [[#user-interface][User interface]]
 - [[#standard-ontology][Standard ontology]]
-- [[#internals][Internals]]
+- [[#implementing-the-ontology][Implementing the ontology]]
 - [[#clientserver-protocol][Client/server protocol]]
 - [[#unresolved-issues][Unresolved issues]]
 - [[#footnotes][Footnotes]]
@@ -284,7 +284,34 @@ type system used to implement this model.
 #+RESULTS:
 [[file:images/EntityHierarchy.png]]
 
-* Internals
+* Implementing the ontology
+
+I believe Tkacz requires a complex enough class system not to be able
+to rely on common OOP mechanisms --- but who knows.
+
+The Tkacz ontology is made of three big kinds of "things":
+
+ - Entity type :: which in OOP are generally called "classes".  This
+   includes a root class, =Entity=, and an undefined number of children.
+   Children may be instantiable or "abstract" (abstract is never used
+   to describe entity types, Tkacz simply describes such types are
+   "non instantiables".  That's because some instantiable entity types
+   are actually abstract (Tkacz has a type for "a book which has had
+   multiple editions", which is a pure abstraction which corresponds
+   to no actual text --- but is still useful) or "generic" (some
+   higher-level entities may be instantiated instead of one if its
+   children)
+
+ - Relationships :: which are a kind of special fields which connect two
+   entities together.  For example, being the author of a book is a
+   relationship, because Person and Book and are entity types.
+
+   Relationships may be unidirectional, reciprocal or imply other
+                    relationships.
+
+   From a OOP perspective, a relationship
+
+ - Fields ::
 
 ** The type system
 
