@@ -1,10 +1,11 @@
-{-| Description: A specialization of Data.Tree.Tree with named leaves and 'String' lookup.
+{-# LANGUAGE Rank2Types #-}
+
+{-| Description: A specialization of Data.Tree.Tree with named leaves
+    and leave lookup by identifier.
 
 @TODO
 
 -}
-
-{-# LANGUAGE Rank2Types #-}
 
 module Tkacz.AddressableTree where
 

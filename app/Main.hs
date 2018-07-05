@@ -109,7 +109,7 @@ parser = Invocation
     <> hidden))
 
 cmdVersion :: Invocation -> IO ()
-cmdVersion _ = putStrLn $ "Tkacz version " ++ (showVersion Tkacz.version)
+cmdVersion _ = putStrLn $ "Tkacz version " ++ showVersion Tkacz.version
 
 route :: Invocation -> IO ()
 route i = let go' Version = cmdVersion
