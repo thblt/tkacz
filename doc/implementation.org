@@ -10,7 +10,21 @@
 
 This document complements the [[design.org][Tkacz design document]], but focuses on
 implementation details rather than on the general behavior of the
-program.
+program.  It specifically addresses the issue of implementing Tkacz'
+data model, which should be implemented in two separate levels:
+
+ - A general type system;
+ - A specific data model, accessible and extensible by the user.
+
+I suspect the design of Haskell ADTs make it necessary to implement
+our typesystem on /top/ of them, because:
+
+ - types must be, from the language's point of view, values, if we
+   want them to be inspectable and extensible at runtime;
+ - there shouldn't be a need to use a custom executable just to hack
+   into the typesystem.
+
+This document describes not two, but three levels: a
 
 * Data model
 
