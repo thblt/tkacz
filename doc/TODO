@@ -1,0 +1,82 @@
+# IMPLEMENTATION NOTES -*- org -*-
+
+* Chaque objet est un graphe façon JSON
+
+Autrement dit: un type disjonctif récursif, à membres nommés.
+
+Forme générale de la solution:
+
+ - Chaque entité objective correspond à une structure sérialisée;
+ - Elle est interprétée par un truc qui représente son type, auquel
+   elle fait d'une façon ou d'une autre référence.
+
+** Problème 1: accéder aux valeurs de manière structurée
+
+*** Sous-problème A: accéder aux valeurs littérales
+
+Exemple: le titre.
+
+Pour permettre la conversion entre types, le titre doit avoir quelque
+chose de standard, c'est-à-dire que si je convertis (pour corriger une
+erreur par exemple) un type dans un autre (disons un article en
+conférence), je dois pouvoir automatiquement transférer les
+informations significatives sans écrire $n^2$ convertisseurs.
+
+Plusieurs solutions:
+
+ - Chaque type est un ensemble (ordonné?) d'accesseurs, qui possèdent
+   chacun une ou plusieurs clés du graphe et sont éventuellement
+   paramétrables.  Du coup, titre est un assesseur qui possède la clé
+   =title=, qui est un paquet de chaînes (localisées).
+
+Dans tous les cas, certains accesseurs doivent être standards au-delà
+de la conversion, par exemple pour formater les citations, etc: il
+faut que le parseur CSL ou l'exporteur BibTeX sachent trouver le
+titre, etc. (on peut dire: la présence d'un accesseur définit un
+trait, ou quelque chose dans ce goût: =title= \to =Titled=.)
+
+*** Sous-problème B: qu'est-ce qu'un accesseur?
+
+Définir précisément ce que ça fait.
+
+(Sérialiser, désérialiser)
+
+*** Sous-problème C: sous-types identiques, sémantiques différentes
+
+Certains accesseurs peuvent manipuler la même chose mais avec une
+sémantique différente: par exemple auteur, éditeur, éditeur
+scientifique, préfacier, «postfacier», etc.
+
+Solution possible: un accesseur combine un nom de clé (disons,
+"authors") et un type pour le contenu.  À préciser.
+
+*** Sous-problème D: présenter une UI d'édition
+
+Il faut pouvoir
+
+** Problème 2: accéder aux valeurs par référence
+
+Par exemple: un auteur, une revue, un éditeur.
+
+*** Sous-problème A: accéder de manière qualifiée
+
+Exemple: une revue, mais un *numéro* de revue; une personne, par un nom
+déterminé.
+
+*** Sous problème B: garantir la cohérence des références
+
+Tous les accès qualifiés ne sont pas valides: par exemple, il peut y
+avoir incongruence entre le numéro d'une revue et l'année.  La cible
+doit pouvoir valider la référence.
+
+Autre solution: la référence se fait a minima (par exemple, pour une
+revue, par numéro uniquement), et la cible fournit les valeurs
+supplémentaires.  Le problème reste, mais se pose autrement.
+
+** Problème 3: types partiellement ou totalement disjonctifs
+
+Le type
+
+** Problème 4: gérer les relations
+
+** Problème 5: il faut du code dans le type

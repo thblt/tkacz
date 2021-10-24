@@ -2,7 +2,6 @@
 
 * Contents :TOC_1:noexport:
 - [[#introduction][Introduction]]
-- [[#data-model][Data model]]
 - [[#a-simplified-version-of-the-problem][A simplified version of the problem]]
 - [[#search][Search]]
 
@@ -24,9 +23,128 @@ our typesystem on /top/ of them, because:
  - there shouldn't be a need to use a custom executable just to hack
    into the typesystem.
 
-This document describes not two, but three levels: a
+* Haskell implementation
 
-* Data model
+An important goal is the open nature of the Tkacz structure.  But
+open-ended doesn't mean we cannot provide reasonable defaults.
+
+** The generic Entity
+
+Entities /in general/ must do the following things:
+
+ - Be displayed as a list.  Having a list means some common display
+   format, whichever it is.
+ - Be tested with predicates.
+
+   A Predicate is a function that applies to a =Store= and an
+   =Entity=, and returns a =Bool=.
+
+ - Be shown as a =View=.
+
+   A /View/ is type-dependant.  That is, the generic Entity only needs
+   to expose a function to get a view for this specific type of
+   Entity.
+
+ - Be modified from an =Editor=.
+
+   =Editor= here is an abstracted UI element.  It must be able to
+   enumerate the fields in a =data= declaration, expose them as
+   user-editable info, and so on.
+
+   Like View, Editor is type-dependant, and thus not a concern of the
+   /generic/ Entity type.
+
+*** Implementing the generic entity
+
+Since we need to list Entities, and we'd rather avoid heterogeneous
+list, we need to define a =DefaultEntityDescriptor= type:
+
+#+begin_src haskell
+  data DefaultEntityDescriptor =
+    DefaultEntityDescriptor {
+    author :: Maybe String
+    , title :: Maybe String
+    , date :: Maybe Int }
+#+end_src
+
+This is a reasonable descriptor as a starting point, but we needn't
+restrict ourselves to it.  So we define Entity as simply a typeclass
+that can return a descriptor:
+
+#+begin_src haskell
+  class Entity a where
+    entityId :: a -> Int
+    entityDescriptor :: a -> d
+#+end_src
+
+It is the job of the Tkacz instance to constrain =d= to a usable type.
+
+*** Working with Entity data
+
+We read entities in a serialized form, either from a file or a
+database and need to dispatch the serialized data to the corresponding
+reader, then run this reader.  Entities have a text tag to identify
+their type,
+
+#+begin_src haskell
+  class Entity a => Readable a where
+    tkaczRead :: s -> Either ReadError a
+#+end_src
+
+Where =s= is any kind of serialized data (a lisp-esque stream in default
+Tkacz).
+
+**** ISSUES with this model
+
+ - *Lost results*: Initial read will parse an Entity in full, generate
+   a concrete Entity, build an =EntityDescriptor= from it and drop the
+   parsing output, which is a bit sad and sounds stupid.  But there
+   are no real solution, unless we create a complete disjunctive type
+   /again/. This is important.
+
+   Good solution: *DON'T do that*.
+
+   1. Each entity is stored as a file that begins with a serialized
+      description data, or stores this data in a separate file with a
+      different extension. For example, =Michel Foucault (1040).card=
+      could be accompanied by =.1040 Michel Foucault.dsc=.  The
+      initial step reads the description data only.
+
+   2. The viewer and the editor, if/when they're called, read the
+      actual data and builds their various views from that, updating
+      them accordingly.
+
+   3. When an editor returns a modified data set, it gets stored back
+      to disk and the description is updated accordingly.
+
+   4. Special features that /need/ to work with fully read entities,
+      because they're aware of their types, can still do so with
+      =readEntity= and =updateEntity=.
+
+ - Each reader is parameterized by an input format AND a output type,
+   which means the total number of readers is =formats * types= ---
+   potentially a lot.  Also, this means that an Entity type determines
+   the kind of input it expects.  OR we're going to need some sort of
+   canonical internal representation common to readers and editors and
+   viewers.  This may be the best road.
+
+ - By the way: readers must /consume/ their input somehow so extra
+   data can be reported as error.
+
+** Contexts
+
+*** The INBOX
+
+INBOX is a context of things that exist in no other contexts.  It is a
+context for entities only.  It is part of default library, but not of
+the core.
+
+** General workflow
+
+When starting =tkacz server=, Tkacz starts by reading its store db,
+selecting the default or last context and building the list of (Int,
+EntityDescriptor) before passing it to the UI, which is expected to
+display a list.
 
 * A simplified version of the problem
 
@@ -113,7 +231,8 @@ There are multiple solutions for this:
 
  - we extend the type of Person with a "reverse relationship" =IsAuthorOf=.  This is not settable by the user, but is set when the forward relationship (=Author=) is attributed.
 
-** Solution 1: Haskell ADTs + some lenses
+
+** Solution 2: Haskell ADTs + some lenses
 
 *** Problem 1: resolving relationships
 
@@ -139,6 +258,6 @@ and predicate functions of the form:
 
 This implies a horrible amount of boilerplate, but is not impossible
 
-*** * Data storage
+*** Data storage
 
 * Search

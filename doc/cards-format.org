@@ -1,0 +1,70 @@
+#+TITLE: Format specification for Tkacz “cards”
+
+* Heading specification
+
+** Card headings
+
+A card heading has up to three components: a type, with an optional
+subtype, and a title.  The syntax is as follows:
+
+#+begin_example
+  type(subtype): Title
+#+end_example
+
+Only =type= is required.  =title= is optional, and will be
+automatically generated on =auto_title= types.  Because Tkacz is
+polite, it will log the titles it deletes when saving.  You can get
+them back by calling =tkacz log see-destructions [card]=.
+
+The heading ends at the first newline.
+
+#+begin_example
+personne: Saint-Augustin
+                ^
+
+\aka Augustin \sort
+#+end_example
+
+
+** Special headings
+
+A card heading that starts with the magic byte =,= (~0x2C~) is a
+special card.  Such cards are never directly accessible, except for
+the card 0 that configures the repository.  Such cards will be read as
+a single s-expression then ignored altogether.  Common forms are as follows:
+
+#+begin_src scheme
+  ,(card this deleted) ; For a card that's been deleted.
+#+end_src
+
+#+begin_src scheme
+  ,(declare this CARD) ; Redirect to CARD after a merge.
+#+end_src
+
+The fact that special cards are read only for a single atom means that
+any contents can be kept below.  =tkacz merge= doesnt't actually clear
+the card, it simply adds the header, merged contents is kept (unless
+you add the =--clear= argument)
+
+*** Merged cards
+
+A card is merged
+
+** Handling invalid headings
+
+Cards whose heading match neither format, or special headings that
+raise a lisp error, are marked =invalid=.  Invalid is a special state
+that can be removed by fixing the heading.  Invalidity propagates to
+cards that links to invalid cards (and so on, recursively).
+Propagated invalidity makes the repository inconsistent.
+
+* Card types
+
+** Example: a book
+
+#+begin_src scheme
+  document(book): [Kant, /A Critique of Pure Reason/]
+
+  \meta
+  Notes
+#+end_src
