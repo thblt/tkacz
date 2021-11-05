@@ -9,5 +9,3 @@ providing suggestions or feedback.
 People interested in the project may begin by reading the [design
 document](doc/design.org), which is (perpetually) obsolete but may
 give a good idea of what Tkacz should be.
-
-[![](https://badges.gitter.im/thblt/tkacz.svg)](https://gitter.im/thblt/tkacz?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)

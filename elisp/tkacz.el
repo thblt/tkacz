@@ -93,7 +93,7 @@
 
 ;;;; Side views
 
-(defun tkacz-side-view (buffer side action &optional noswap)
+(defun tkacz-side-view (buffer side &optional action noswap)
   "Control the display of BUFFER as a side view on SIDE.
 
 BUFFER is a buffer, or nil.
@@ -109,14 +109,13 @@ ACTION can be:
 By default, this will replace an existing side buffer, unless
 NOSWAP is non-nil."
   )
+;; Notes to self:
+;; (display-buffer-in-side-window (get-buffer-create "*TZ collections*") '((side . top)))
+;; (display-buffer-in-side-window (get-buffer-create "*TZ Notes*") '((side . right)))
+;; (display-buffer-in-side-window (get-buffer-create "*TZ Details*") '((side . bottom)))
 
 ;;;;; Customizations
 
 (provide 'tkacz)
 
 ;;; tkacz.el ends here
-
-;; Notes to self:
-;; (display-buffer-in-side-window (get-buffer-create "*TZ collections*") '((side . top)))
-;; (display-buffer-in-side-window (get-buffer-create "*TZ Notes*") '((side . right)))
-;; (display-buffer-in-side-window (get-buffer-create "*TZ Details*") '((side . bottom)))
